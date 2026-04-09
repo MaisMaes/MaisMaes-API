@@ -1,8 +1,8 @@
 package com.maismaes.com.br.exception;
 
-import jakarta.validation.ConstraintDeclarationException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.AuthenticationException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
@@ -20,6 +20,13 @@ public class GeneralExceptionHandler {
         return ResponseEntity
                 .status(HttpStatus.BAD_REQUEST)
                 .body(montaMensagemErro(Objects.requireNonNull(e.getFieldError()).getDefaultMessage()));
+    }
+
+    @ExceptionHandler(AuthenticationException.class)
+    public ResponseEntity<HashMap<String, String>> handleAuthenticationException(AuthenticationException e){
+        return ResponseEntity
+                .status(HttpStatus.UNAUTHORIZED)
+                .body(montaMensagemErro("Usuário ou senha incorretos"));
     }
 
     private HashMap<String, String> montaMensagemErro(String mensagem) {

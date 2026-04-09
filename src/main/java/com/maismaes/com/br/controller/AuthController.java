@@ -5,6 +5,7 @@ import com.maismaes.com.br.dto.response.AuthResponseDTO;
 import com.maismaes.com.br.entities.Perfil;
 import com.maismaes.com.br.service.TokenService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
@@ -25,10 +26,12 @@ public class AuthController {
     public ResponseEntity<AuthResponseDTO> login(@RequestBody AuthRequestDTO login) {
         var usernamePassword = new UsernamePasswordAuthenticationToken(login.email(), login.senha());
         var auth = this.authenticationManager.authenticate(usernamePassword);
-        var perfil = (Perfil) auth.getPrincipal();
+        var token = tokenService.generateToken((Perfil) auth.getPrincipal());
 
-        var token = tokenService.generateToken(perfil);
-        return ResponseEntity.ok(new AuthResponseDTO(token, perfil.getRole().toString()));
+        var response = new AuthResponseDTO(token);
+        return ResponseEntity
+                .status(HttpStatus.OK)
+                .body(response);
     }
 
 }
