@@ -19,6 +19,7 @@ public record CadastroUsuarioRequestDTO(
         String telefone,
 
         @NotBlank(message = "Senha é obrigatória")
+        @Pattern(regexp = "^(?=.*[a-z])(?=.*[A-Z])(?=.*\\d)(?=.*[@#$%^&+=!]).{8,}$", message = "Senha não atende aos critérios de segurança")
         String senha
 ) {
     public Usuario toUsuarioEntity(String senha){
