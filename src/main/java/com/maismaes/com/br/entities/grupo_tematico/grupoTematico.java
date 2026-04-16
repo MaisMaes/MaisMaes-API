@@ -26,7 +26,7 @@ import lombok.Setter;
 @Entity
 @NoArgsConstructor
 @AllArgsConstructor
-public class grupoTematico {
+public class GrupoTematico {
 
     @Id
     @GeneratedValue(strategy = jakarta.persistence.GenerationType.UUID)
@@ -41,8 +41,8 @@ public class grupoTematico {
     private String descricao;
 
     @Enumerated(EnumType.STRING)
-    @Column(name= "categoria", nullable = false)
-    private categorias categoria;
+    @Column(name= "categorias", nullable = false)
+    private Categorias categorias;
 
     @Column
     private String bairro;
@@ -60,7 +60,7 @@ public class grupoTematico {
     // @ElementCollection(targetClass = tiposDados.class)
     // @Enumerated(EnumType.STRING)
     // @Column(name = "tipo_dado", nullable = false)
-    // private tiposDados tipoDado;
+    // private <TiposDados> tipoDado;
 
 
 }

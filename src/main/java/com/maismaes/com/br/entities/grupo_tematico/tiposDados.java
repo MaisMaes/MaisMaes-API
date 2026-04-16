@@ -1,6 +1,6 @@
 package com.maismaes.com.br.entities.grupo_tematico;
 
-public enum tiposDados {
+public enum TiposDados {
     TEXTO,
     IMAGEM,
     AUDIO,
