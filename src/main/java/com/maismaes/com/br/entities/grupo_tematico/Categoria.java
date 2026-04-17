@@ -1,6 +1,6 @@
 package com.maismaes.com.br.entities.grupo_tematico;
 
-public enum Categorias {
+public enum Categoria{
 
     SAUDE,
     EDUCACAO,

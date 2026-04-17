@@ -1,7 +1,5 @@
 package com.maismaes.com.br.config;
 
-import com.maismaes.com.br.infra.security.SecurityFilter;
-import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.authentication.AuthenticationManager;
@@ -12,6 +10,10 @@ import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
+
+import com.maismaes.com.br.infra.security.SecurityFilter;
+
+import lombok.RequiredArgsConstructor;
 
 @RequiredArgsConstructor
 @Configuration
@@ -29,6 +31,7 @@ public class SecurityConfig {
                 .authorizeHttpRequests(autorize-> autorize
                         .requestMatchers("/h2-console/**").permitAll()  // Permite o acesso ao H2 Console
                         .requestMatchers("/swagger-ui/**", "/v3/api-docs/**").permitAll()
+                        .requestMatchers("/grupo-tematico/**").permitAll()
                         .anyRequest().permitAll())
                 .addFilterBefore(securityFilter, UsernamePasswordAuthenticationFilter.class)
                 .build();
