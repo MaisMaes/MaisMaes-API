@@ -27,7 +27,12 @@ public class SecurityFilter extends OncePerRequestFilter {
         var token = this.recoverToken(request); // Recupera o token da requisição
         if (token != null) { // Se houver um token presente
             String email = tokenService.validateToken(token); // Valida o token e extrai o email do usuário
-            Perfil user = perfilRepository.findByPerfilEmail(email); // Busca o usuário no banco de dados
+            Perfil user = perfilRepository.findByPerfilEmail(email); // Busca o usuário no banco de dados.
+
+            if (user == null) { //
+                filterChain.doFilter(request, response);
+                return;
+            }
 
             // Cria um objeto de autenticação do Spring Security com o usuário autenticado
             var authentication = new UsernamePasswordAuthenticationToken(user, null, user.getAuthorities());

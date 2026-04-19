@@ -35,4 +35,15 @@ public class GeneralExceptionHandler {
         response.put("horario", LocalDateTime.now().format(DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm:ss")));
         return response;
     }
+
+
+    @ExceptionHandler(UsuarioNaoEncontradoException.class)
+    public ResponseEntity<HashMap<String, String>> handleUsuarioNaoEncontradoException(
+            UsuarioNaoEncontradoException e
+    ) {
+        return ResponseEntity
+                .status(HttpStatus.NOT_FOUND)
+                .body(montaMensagemErro(e.getMessage()));
+    }
+
 }
