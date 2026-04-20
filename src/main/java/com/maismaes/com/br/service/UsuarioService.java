@@ -8,12 +8,14 @@ import com.maismaes.com.br.exception.SenhaIgualException;
 import com.maismaes.com.br.exception.UsuarioNaoEncontradoException;
 import com.maismaes.com.br.repository.PerfilRepository;
 import com.maismaes.com.br.repository.UsuarioRepository;
+import com.maismaes.com.br.utils.UserValidationUtils;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.apache.catalina.User;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
 
+import java.util.Optional;
 import java.util.UUID;
 
 @RequiredArgsConstructor
@@ -21,11 +23,13 @@ import java.util.UUID;
 public class UsuarioService {
 
     private final UsuarioRepository usuarioRepository;
+    private final UserValidationUtils userValidationUtils;
     private final PerfilRepository perfilRepository;
     private final BCryptPasswordEncoder bCryptPasswordEncoder;
 
 
     public Usuario cadastrarUsuario(Usuario usuario) {
+        userValidationUtils.verificarUnicidade(usuario.getEmail(), usuario.getTelefone(), usuario.getId());
         return usuarioRepository.save(usuario);
     }
 
@@ -41,34 +45,49 @@ public class UsuarioService {
         Usuario usuario = usuarioRepository.findById(id)
                 .orElseThrow(UsuarioNaoEncontradoException::new);
 
-        Perfil perfil = usuario.getPerfil();
+        Perfil perfil = Optional.ofNullable(usuario.getPerfil())
+                .orElseThrow(() -> new RuntimeException("Perfil não encontrado"));
 
-        if (dto.nome() != null && !dto.nome().isBlank()) {
+        userValidationUtils.verificarUnicidade(
+                dto.email(),
+                dto.telefone(),
+                usuario.getId()
+        );
+
+        if (isValid(dto.nome())) {
             usuario.setNome(dto.nome());
         }
 
-        if (dto.telefone() != null && !dto.telefone().isBlank()) {
+        if (isValid(dto.telefone())) {
             usuario.setTelefone(dto.telefone());
         }
 
-        if (dto.email() != null && !dto.telefone().isBlank()){
+        if (isValid(dto.email())) {
             usuario.setEmail(dto.email());
             perfil.setPerfilEmail(dto.email());
         }
 
-        if (dto.senha() != null && !dto.senha().isBlank()) {
+        if (isValid(dto.senha())) {
 
             if (bCryptPasswordEncoder.matches(dto.senha(), perfil.getSenha())) {
                 throw new SenhaIgualException();
             }
-
-            var senhaNovaHash = bCryptPasswordEncoder.encode(dto.senha());
-            perfil.setSenha(senhaNovaHash);
+            perfil.setSenha(bCryptPasswordEncoder.encode(dto.senha()));
         }
 
         return new BuscaDadosContaResponseDTO(usuario);
+    }
+
+    private boolean isValid(String value) {
+        return value != null && !value.isBlank();
+    }
+
+
+    public void deletaUsuario(){
 
     }
+
+
 
 
 

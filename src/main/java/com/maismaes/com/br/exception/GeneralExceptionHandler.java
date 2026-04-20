@@ -57,4 +57,19 @@ public class GeneralExceptionHandler {
     }
 
 
+    @ExceptionHandler(VerificarUnicidadeException.class)
+    public ResponseEntity<HashMap<String,String>>
+    handleVerificarUnicidadeException(VerificarUnicidadeException e){
+        return ResponseEntity
+                .status(HttpStatus.CONFLICT)
+                .body(montaMensagemErro(e.getMessage()));
+    }
+
+
+
+
+
+
+
+
 }
