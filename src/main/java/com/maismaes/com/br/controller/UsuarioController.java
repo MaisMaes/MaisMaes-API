@@ -3,6 +3,7 @@ package com.maismaes.com.br.controller;
 import com.maismaes.com.br.dto.request.AtualizaDadosContaDTO;
 import com.maismaes.com.br.dto.request.BuscaDadosContaResponseDTO;
 import com.maismaes.com.br.dto.request.CadastroUsuarioRequestDTO;
+import com.maismaes.com.br.dto.request.DeletaContaDTO;
 import com.maismaes.com.br.dto.response.CadastroUsuarioResponseDTO;
 import com.maismaes.com.br.entities.Perfil;
 import com.maismaes.com.br.entities.Usuario;
@@ -75,6 +76,17 @@ public class UsuarioController {
             @RequestBody @Valid AtualizaDadosContaDTO dto) {
         BuscaDadosContaResponseDTO response = usuarioService.atualizaDadosConta(dto, perfilLogado.getUsuario().getId());
         return ResponseEntity.ok(response);
+    }
+
+    @DeleteMapping("/deletar/me")
+    public ResponseEntity<String> deletarConta(
+            @RequestBody DeletaContaDTO dto,
+            @AuthenticationPrincipal Perfil perfilLogado
+    ) {
+
+        usuarioService.deletaConta(perfilLogado, dto);
+
+        return ResponseEntity.ok("Conta excluída com sucesso");
     }
 
 

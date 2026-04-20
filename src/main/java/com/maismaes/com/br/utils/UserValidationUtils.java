@@ -1,6 +1,5 @@
 package com.maismaes.com.br.utils;
 
-import com.maismaes.com.br.exception.SenhaIgualException;
 import com.maismaes.com.br.exception.VerificarUnicidadeException;
 import com.maismaes.com.br.repository.UsuarioRepository;
 import lombok.RequiredArgsConstructor;

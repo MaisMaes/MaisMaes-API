@@ -46,10 +46,10 @@ public class GeneralExceptionHandler {
                 .body(montaMensagemErro(e.getMessage()));
     }
 
-    @ExceptionHandler(SenhaIgualException.class)
+    @ExceptionHandler(SenhaException.class)
     public ResponseEntity<HashMap<String, String>>
     handleSenhaIgualException(
-            SenhaIgualException e
+            SenhaException e
     ) {
         return ResponseEntity
                 .status(HttpStatus.CONFLICT)

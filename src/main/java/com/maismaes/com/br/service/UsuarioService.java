@@ -2,16 +2,16 @@ package com.maismaes.com.br.service;
 
 import com.maismaes.com.br.dto.request.AtualizaDadosContaDTO;
 import com.maismaes.com.br.dto.request.BuscaDadosContaResponseDTO;
+import com.maismaes.com.br.dto.request.DeletaContaDTO;
 import com.maismaes.com.br.entities.Perfil;
 import com.maismaes.com.br.entities.Usuario;
-import com.maismaes.com.br.exception.SenhaIgualException;
+import com.maismaes.com.br.exception.SenhaException;
 import com.maismaes.com.br.exception.UsuarioNaoEncontradoException;
 import com.maismaes.com.br.repository.PerfilRepository;
 import com.maismaes.com.br.repository.UsuarioRepository;
 import com.maismaes.com.br.utils.UserValidationUtils;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
-import org.apache.catalina.User;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
 
@@ -70,7 +70,7 @@ public class UsuarioService {
         if (isValid(dto.senha())) {
 
             if (bCryptPasswordEncoder.matches(dto.senha(), perfil.getSenha())) {
-                throw new SenhaIgualException();
+                throw new SenhaException("Senha igual a anterior!");
             }
             perfil.setSenha(bCryptPasswordEncoder.encode(dto.senha()));
         }
@@ -82,9 +82,24 @@ public class UsuarioService {
         return value != null && !value.isBlank();
     }
 
+    @Transactional
+    public void deletaConta(Perfil perfilLogado, DeletaContaDTO dto) {
 
-    public void deletaUsuario(){
+        Usuario usuario = perfilLogado.getUsuario();
 
+        if (usuario == null) {
+            throw new RuntimeException("Usuário não encontrado");
+        }
+
+        if (!bCryptPasswordEncoder.matches(dto.senha(), perfilLogado.getPassword())) {
+            throw new SenhaException("Senha inválida!");
+        }
+
+        usuario.setPerfil(null);
+        perfilLogado.setUsuario(null);
+
+        usuarioRepository.delete(usuario);
+        perfilRepository.delete(perfilLogado);
     }
 
 
