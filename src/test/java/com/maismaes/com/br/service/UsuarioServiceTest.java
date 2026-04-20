@@ -91,7 +91,7 @@ class UsuarioServiceTest {
 
             Perfil perfil = Perfil.builder()
                     .perfilEmail("mae@example.com")
-                    .role(Role.ADMINISTRADOR)
+                    .role(Role.MAE_SOLO)
                     .build();
 
             Usuario usuario = Usuario.builder()
@@ -112,7 +112,7 @@ class UsuarioServiceTest {
             assertEquals("Maria", response.nome());
             assertEquals("mae@example.com", response.email());
             assertEquals("81999999999", response.telefone());
-            assertEquals("ADMINISTRADOR", response.role());
+            assertEquals("MAE_SOLO", response.role());
 
             verify(usuarioRepository, times(1))
                     .findByPerfil_PerfilEmail("mae@example.com");

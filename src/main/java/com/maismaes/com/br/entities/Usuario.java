@@ -7,6 +7,7 @@ import java.util.UUID;
 
 @Builder
 @Getter
+@Setter
 @Entity
 @Table(name = "usuarios")
 @NoArgsConstructor

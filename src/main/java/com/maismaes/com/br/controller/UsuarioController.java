@@ -1,9 +1,11 @@
 package com.maismaes.com.br.controller;
 
+import com.maismaes.com.br.dto.request.AtualizaDadosContaDTO;
 import com.maismaes.com.br.dto.request.BuscaDadosContaResponseDTO;
 import com.maismaes.com.br.dto.request.CadastroUsuarioRequestDTO;
 import com.maismaes.com.br.dto.response.CadastroUsuarioResponseDTO;
 import com.maismaes.com.br.entities.Perfil;
+import com.maismaes.com.br.entities.Usuario;
 import com.maismaes.com.br.service.TokenService;
 import com.maismaes.com.br.service.UsuarioService;
 import io.swagger.v3.oas.annotations.Operation;
@@ -59,6 +61,19 @@ public class UsuarioController {
 
         BuscaDadosContaResponseDTO response =
                 usuarioService.buscarDadosConta(perfil_);
+        return ResponseEntity.ok(response);
+    }
+
+
+    @PatchMapping("/atualizar")
+    @Operation(
+            summary = "Realiza a atualização dos campos",
+            description = "Este endpoint faz uma atualização, que pode ser parcial, dos campos do usuario, extrai id do usuário diretamente do token, portanto, o usuário deve estar autenticado."
+    )
+    public ResponseEntity<BuscaDadosContaResponseDTO> atualizarDados(
+            @AuthenticationPrincipal Perfil perfilLogado,
+            @RequestBody @Valid AtualizaDadosContaDTO dto) {
+        BuscaDadosContaResponseDTO response = usuarioService.atualizaDadosConta(dto, perfilLogado.getUsuario().getId());
         return ResponseEntity.ok(response);
     }
 

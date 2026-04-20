@@ -21,6 +21,7 @@ import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 
 import java.util.UUID;
 
+
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
@@ -117,17 +118,21 @@ class UsuarioControllerTest {
         @DisplayName("Deve retornar dados do usuário logado")
         void deveRetornarDadosDoUsuarioLogado() {
 
-
+            UUID uid = UUID.randomUUID();
             Perfil perfil = Perfil.builder()
                     .perfilEmail("mae@example.com")
+                    .role(Role.MAE_SOLO)
                     .build();
 
-            BuscaDadosContaResponseDTO dto = new BuscaDadosContaResponseDTO(
-                    "Maria",
-                    "mae@example.com",
-                    "81999999999",
-                    "ADMINISTRADOR"
-            );
+            Usuario usuario = Usuario.builder()
+                    .id(uid)
+                    .nome("Maria")
+                    .email("mae@example.com")
+                    .telefone("81999999999")
+                    .perfil(perfil)
+                    .build();
+
+            BuscaDadosContaResponseDTO dto = new BuscaDadosContaResponseDTO(usuario);
 
             when(usuarioService.buscarDadosConta("mae@example.com"))
                     .thenReturn(dto);
@@ -145,7 +150,7 @@ class UsuarioControllerTest {
             assertEquals("Maria", body.nome());
             assertEquals("mae@example.com", body.email());
             assertEquals("81999999999", body.telefone());
-            assertEquals("ADMINISTRADOR", body.role());
+            assertEquals("MAE_SOLO", body.role());
 
             verify(usuarioService, times(1))
                     .buscarDadosConta("mae@example.com");
