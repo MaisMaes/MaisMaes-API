@@ -15,7 +15,8 @@ public record CadastroUsuarioRequestDTO(
         @Email(message = "Email inválido")
         String email,
 
-        @Pattern(regexp = "^\\d{2}\\s9\\d{8}$", message = "Telefone deve estar no formato: XX 9XXXXXXXX)")
+        @Pattern(regexp = "^\\(\\d{2}\\)\\s9\\d{4}-\\d{4}$",
+                message = "Telefone deve estar no formato: (XX) 9XXXX-XXXX")
         String telefone,
 
         @NotBlank(message = "Senha é obrigatória")

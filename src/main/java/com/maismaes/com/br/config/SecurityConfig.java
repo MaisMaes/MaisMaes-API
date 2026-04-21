@@ -16,6 +16,7 @@ import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 
+import java.util.Arrays;
 import java.util.List;
 
 @RequiredArgsConstructor
@@ -28,12 +29,15 @@ public class SecurityConfig {
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         return http
+                .cors(cors -> cors.configurationSource(corsConfigurationSource()))
                 .csrf(csrf -> csrf.disable())
                 .sessionManagement(session->
                         session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(autorize-> autorize
                         .requestMatchers("/h2-console/**").permitAll()  // Permite o acesso ao H2 Console
                         .requestMatchers("/swagger-ui/**", "/v3/api-docs/**").permitAll()
+                        .requestMatchers("/auth/login").permitAll()
+                        .requestMatchers("/usuario/cadastro").permitAll()
                         .requestMatchers("/usuario/me").authenticated()
                         .requestMatchers("derleta/me").authenticated()
                         .requestMatchers("/atualizar").authenticated()
@@ -43,18 +47,19 @@ public class SecurityConfig {
     }
 
     @Bean
-    public CorsConfigurationSource corsConfigurationSource(){
-        CorsConfiguration corsConfiguration = new CorsConfiguration();
-        corsConfiguration.setAllowedOrigins(List.of(
-                "http://localhost:3000",
-                "http://localhost:5173",
-                "http://localhost:9090"
-        ));
-        corsConfiguration.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "PATCH"));
-        corsConfiguration.setAllowedHeaders(List.of("Authorization", "Content-Type"));
-        corsConfiguration.setAllowCredentials(true);
+    public CorsConfigurationSource corsConfigurationSource() {
+
+        CorsConfiguration configuration = new CorsConfiguration();
+
+        configuration.setAllowedOrigins(Arrays
+                .asList("http://localhost:8082",
+                        "http://localhost:8081"));
+        configuration.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "DELETE"));
+        configuration.setAllowedHeaders(List.of("Authorization", "Content-Type"));
+        configuration.setAllowCredentials(true);
+
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
-        source.registerCorsConfiguration("/**", corsConfiguration);
+        source.registerCorsConfiguration("/**", configuration);
         return source;
     }
 
