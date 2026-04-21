@@ -35,3 +35,8 @@ build/
 ### Docker-grupo tematico ###
 docker-compose.yml
 Dockerfile
+
+### Otros ###
+*.log
+*.tmp
+desktop.ini

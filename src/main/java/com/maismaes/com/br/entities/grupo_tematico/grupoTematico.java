@@ -1,11 +1,20 @@
 package com.maismaes.com.br.entities.grupo_tematico;
 
+import java.util.HashSet;
+import java.util.Set;
+
+import com.maismaes.com.br.entities.Usuario;
+
+import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.Id;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.ManyToOne;
+import jakarta.persistence.OneToMany;
 import jakarta.persistence.Table;
 import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.NotNull;
@@ -28,6 +37,10 @@ public class GrupoTematico {
     @GeneratedValue(strategy = jakarta.persistence.GenerationType.IDENTITY)
     private Long id;
 
+    @ManyToOne
+    @JoinColumn(name = "criador_id", nullable = false)
+    private Usuario criador;
+
     @Column(nullable = false)
     @NotNull
     private String titulo;
@@ -35,6 +48,9 @@ public class GrupoTematico {
     @Column(nullable = false)
     @NotNull
     private String descricao;
+
+    // @Column(name = "foto_url")
+    // private String fotoUrl;
 
     @Enumerated(EnumType.STRING)
     @Column(name = "categorias", nullable = false)
@@ -52,6 +68,9 @@ public class GrupoTematico {
     @Max(100)
     private Integer numeroParticipantes;
 
+    @Column(name = "tempo_entre_mensagens")
+    private Integer tempoEntreMensagens;
+
     @Column(nullable = false)
     @NotNull
     private boolean video;
@@ -67,5 +86,9 @@ public class GrupoTematico {
     @Column(nullable = false)
     @NotNull
     private boolean documento;
+
+    @OneToMany(mappedBy = "grupo", cascade = {CascadeType.ALL, CascadeType.REMOVE}, orphanRemoval = true)
+    @Builder.Default // Garante que o Lombok não ignore a inicialização
+    private Set<ParticipanteGrupo> participantes = new HashSet<>();
 
 }

@@ -18,13 +18,12 @@ public record GrupoTematicoRequestDTO(
 
         @NotNull(message = "O número de participantes é obrigatório") Integer numeroParticipantes,
 
-        @NotNull(message = "O campo de vídeo é obrigatório") boolean video,
+        @NotNull(message = "O tempo entre mensagens é obrigatório") Integer tempoEntreMensagens,
 
-        @NotNull(message = "O campo de áudio é obrigatório") boolean audio,
-
-        @NotNull(message = "O campo de imagem é obrigatório") boolean imagem,
-
-        @NotNull(message = "O campo de documento é obrigatório") boolean documento
+        boolean video,
+        boolean audio,
+        boolean imagem,
+        boolean documento
 
 ) {
 
