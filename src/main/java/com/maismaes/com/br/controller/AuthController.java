@@ -4,6 +4,7 @@ import com.maismaes.com.br.dto.request.AuthRequestDTO;
 import com.maismaes.com.br.dto.response.AuthResponseDTO;
 import com.maismaes.com.br.entities.Perfil;
 import com.maismaes.com.br.service.TokenService;
+import io.swagger.v3.oas.annotations.Operation;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -23,6 +24,10 @@ public class AuthController {
     private final TokenService tokenService;
 
     @PostMapping("/login")
+    @Operation(
+            summary = "Login do usuário",
+            description = "Este endpoint permite o usuário acessar sua conta"
+    )
     public ResponseEntity<AuthResponseDTO> login(@RequestBody AuthRequestDTO login) {
         var usernamePassword = new UsernamePasswordAuthenticationToken(login.email(), login.senha());
         var auth = this.authenticationManager.authenticate(usernamePassword);

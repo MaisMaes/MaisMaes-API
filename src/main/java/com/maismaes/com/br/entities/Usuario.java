@@ -7,6 +7,7 @@ import java.util.UUID;
 
 @Builder
 @Getter
+@Setter
 @Entity
 @Table(name = "usuarios")
 @NoArgsConstructor
@@ -18,7 +19,11 @@ public class Usuario {
     private UUID id;
 
     private String nome;
+
+    @Column(unique = true, nullable = false)
     private String email;
+
+    @Column(unique = true, nullable = false)
     private String telefone;
 
     @OneToOne(fetch = FetchType.LAZY, optional = false, cascade = CascadeType.PERSIST)

@@ -35,4 +35,41 @@ public class GeneralExceptionHandler {
         response.put("horario", LocalDateTime.now().format(DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm:ss")));
         return response;
     }
+
+
+    @ExceptionHandler(UsuarioNaoEncontradoException.class)
+    public ResponseEntity<HashMap<String, String>> handleUsuarioNaoEncontradoException(
+            UsuarioNaoEncontradoException e
+    ) {
+        return ResponseEntity
+                .status(HttpStatus.NOT_FOUND)
+                .body(montaMensagemErro(e.getMessage()));
+    }
+
+    @ExceptionHandler(SenhaException.class)
+    public ResponseEntity<HashMap<String, String>>
+    handleSenhaIgualException(
+            SenhaException e
+    ) {
+        return ResponseEntity
+                .status(HttpStatus.CONFLICT)
+                .body(montaMensagemErro(e.getMessage()));
+    }
+
+
+    @ExceptionHandler(VerificarUnicidadeException.class)
+    public ResponseEntity<HashMap<String,String>>
+    handleVerificarUnicidadeException(VerificarUnicidadeException e){
+        return ResponseEntity
+                .status(HttpStatus.CONFLICT)
+                .body(montaMensagemErro(e.getMessage()));
+    }
+
+
+
+
+
+
+
+
 }

@@ -1,7 +1,10 @@
 package com.maismaes.com.br.service;
 
+import com.maismaes.com.br.dto.request.BuscaDadosContaResponseDTO;
 import com.maismaes.com.br.entities.Perfil;
+import com.maismaes.com.br.entities.Role;
 import com.maismaes.com.br.entities.Usuario;
+import com.maismaes.com.br.exception.UsuarioNaoEncontradoException;
 import com.maismaes.com.br.repository.UsuarioRepository;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
@@ -11,6 +14,7 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
+import java.util.Optional;
 import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -72,6 +76,62 @@ class UsuarioServiceTest {
 
             assertNull(resultado);
             verify(usuarioRepository, times(1)).save(null);
+        }
+    }
+
+
+    @Nested
+    @DisplayName("buscarDadosConta")
+    class BuscarDadosConta {
+
+        @Test
+        @DisplayName("Deve retornar dados do usuário quando encontrado")
+        void deveRetornarDadosDoUsuario() {
+
+
+            Perfil perfil = Perfil.builder()
+                    .perfilEmail("mae@example.com")
+                    .role(Role.MAE_SOLO)
+                    .build();
+
+            Usuario usuario = Usuario.builder()
+                    .nome("Maria")
+                    .telefone("81999999999")
+                    .perfil(perfil)
+                    .build();
+
+            when(usuarioRepository.findByPerfil_PerfilEmail("mae@example.com"))
+                    .thenReturn(Optional.of(usuario));
+
+
+            BuscaDadosContaResponseDTO response =
+                    usuarioService.buscarDadosConta("mae@example.com");
+
+
+            assertNotNull(response);
+            assertEquals("Maria", response.nome());
+            assertEquals("mae@example.com", response.email());
+            assertEquals("81999999999", response.telefone());
+            assertEquals("MAE_SOLO", response.role());
+
+            verify(usuarioRepository, times(1))
+                    .findByPerfil_PerfilEmail("mae@example.com");
+        }
+
+        @Test
+        @DisplayName("Deve lançar exceção quando usuário não encontrado")
+        void deveLancarExcecaoQuandoUsuarioNaoEncontrado() {
+
+
+            when(usuarioRepository.findByPerfil_PerfilEmail("naoexiste@example.com"))
+                    .thenReturn(Optional.empty());
+
+
+            assertThrows(UsuarioNaoEncontradoException.class,
+                    () -> usuarioService.buscarDadosConta("naoexiste@example.com"));
+
+            verify(usuarioRepository, times(1))
+                    .findByPerfil_PerfilEmail("naoexiste@example.com");
         }
     }
 

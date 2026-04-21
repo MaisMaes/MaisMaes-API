@@ -1,10 +1,12 @@
 package com.maismaes.com.br.controller;
 
+import com.maismaes.com.br.dto.request.BuscaDadosContaResponseDTO;
 import com.maismaes.com.br.dto.request.CadastroUsuarioRequestDTO;
 import com.maismaes.com.br.dto.response.CadastroUsuarioResponseDTO;
 import com.maismaes.com.br.entities.Perfil;
 import com.maismaes.com.br.entities.Role;
 import com.maismaes.com.br.entities.Usuario;
+import com.maismaes.com.br.exception.UsuarioNaoEncontradoException;
 import com.maismaes.com.br.service.TokenService;
 import com.maismaes.com.br.service.UsuarioService;
 import org.junit.jupiter.api.DisplayName;
@@ -18,6 +20,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 
 import java.util.UUID;
+
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
@@ -103,6 +106,79 @@ class UsuarioControllerTest {
             verify(usuarioService, times(1)).cadastrarUsuario(any(Usuario.class));
             verify(tokenService, times(0)).generateToken(any());
         }
+
     }
+
+
+    @Nested
+    @DisplayName("buscarMinhaConta")
+    class BuscarMinhaConta {
+
+        @Test
+        @DisplayName("Deve retornar dados do usuário logado")
+        void deveRetornarDadosDoUsuarioLogado() {
+
+            UUID uid = UUID.randomUUID();
+            Perfil perfil = Perfil.builder()
+                    .perfilEmail("mae@example.com")
+                    .role(Role.MAE_SOLO)
+                    .build();
+
+            Usuario usuario = Usuario.builder()
+                    .id(uid)
+                    .nome("Maria")
+                    .email("mae@example.com")
+                    .telefone("81999999999")
+                    .perfil(perfil)
+                    .build();
+
+            BuscaDadosContaResponseDTO dto = new BuscaDadosContaResponseDTO(usuario);
+
+            when(usuarioService.buscarDadosConta("mae@example.com"))
+                    .thenReturn(dto);
+
+
+            ResponseEntity<BuscaDadosContaResponseDTO> response =
+                    usuarioController.buscarMinhaConta(perfil);
+
+
+            assertEquals(200, response.getStatusCodeValue());
+            assertNotNull(response.getBody());
+
+            var body = response.getBody();
+
+            assertEquals("Maria", body.nome());
+            assertEquals("mae@example.com", body.email());
+            assertEquals("81999999999", body.telefone());
+            assertEquals("MAE_SOLO", body.role());
+
+            verify(usuarioService, times(1))
+                    .buscarDadosConta("mae@example.com");
+        }
+
+        @Test
+        @DisplayName("Deve lançar exceção quando usuário não for encontrado")
+        void deveLancarExcecaoQuandoUsuarioNaoEncontrado() {
+
+            Perfil perfil = Perfil.builder()
+                    .perfilEmail("naoexiste@example.com")
+                    .build();
+
+            when(usuarioService.buscarDadosConta("naoexiste@example.com"))
+                    .thenThrow(new UsuarioNaoEncontradoException());
+
+            assertThrows(UsuarioNaoEncontradoException.class,
+                    () -> usuarioController.buscarMinhaConta(perfil));
+
+            verify(usuarioService, times(1))
+                    .buscarDadosConta("naoexiste@example.com");
+        }
+    }
+
+
+
+
+
+
 }
 

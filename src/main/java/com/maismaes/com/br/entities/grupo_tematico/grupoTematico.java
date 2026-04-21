@@ -8,7 +8,6 @@ import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.Id;
 import jakarta.persistence.Table;
 import jakarta.validation.constraints.Max;
-import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotNull;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -51,7 +50,6 @@ public class GrupoTematico {
     @Column(nullable = false)
     @NotNull
     @Max(100)
-    @Min(1)
     private Integer numeroParticipantes;
 
     @Column(nullable = false)

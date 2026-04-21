@@ -32,7 +32,7 @@ public record GrupoTematicoRequestDTO(
         return GrupoTematico.builder()
                 .titulo(titulo)
                 .descricao(descricao)
-                .categorias(Categoria.valueOf(categorias))
+                .categorias(Categoria.valueOf(categorias.toUpperCase()))
                 .bairro(bairro)
                 .privado(privado)
                 .numeroParticipantes(numeroParticipantes)
