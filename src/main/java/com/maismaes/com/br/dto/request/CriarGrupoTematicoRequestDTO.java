@@ -5,7 +5,7 @@ import com.maismaes.com.br.entities.grupo_tematico.GrupoTematico;
 
 import jakarta.validation.constraints.NotNull;
 
-public record GrupoTematicoRequestDTO(
+public record CriarGrupoTematicoRequestDTO(
         @NotNull(message = "O título é obrigatório") String titulo,
 
         @NotNull(message = "A descrição é obrigatória") String descricao,
