@@ -39,6 +39,8 @@ public class SecurityConfig {
                         .requestMatchers("/h2-console/**").permitAll()  // Permite o acesso ao H2 Console
                         .requestMatchers("/swagger-ui/**", "/v3/api-docs/**").permitAll()
                         .requestMatchers("/auth/login").permitAll()
+                        .requestMatchers("/auth/recuperar-senha").permitAll()
+                        .requestMatchers("/auth/redefinir-senha").permitAll()
                         .requestMatchers("/usuario/cadastro").permitAll()
                         .requestMatchers("/usuario/me").authenticated()
                         .requestMatchers("derleta/me").authenticated()

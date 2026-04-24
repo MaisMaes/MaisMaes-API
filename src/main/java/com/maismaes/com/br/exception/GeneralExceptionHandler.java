@@ -57,6 +57,15 @@ public class GeneralExceptionHandler {
     }
 
 
+    @ExceptionHandler(CodigoRecuperacaoInvalidoException.class)
+    public ResponseEntity<HashMap<String, String>> handleCodigoRecuperacaoInvalidoException(
+            CodigoRecuperacaoInvalidoException e
+    ) {
+        return ResponseEntity
+                .status(HttpStatus.BAD_REQUEST)
+                .body(montaMensagemErro(e.getMessage()));
+    }
+
     @ExceptionHandler(VerificarUnicidadeException.class)
     public ResponseEntity<HashMap<String,String>>
     handleVerificarUnicidadeException(VerificarUnicidadeException e){
