@@ -1,5 +1,7 @@
 package com.maismaes.com.br.dto.request;
 
+import java.util.List;
+
 import com.maismaes.com.br.entities.grupo_tematico.Categoria;
 import com.maismaes.com.br.entities.grupo_tematico.GrupoTematico;
 
@@ -12,7 +14,7 @@ public record CriarGrupoTematicoRequestDTO(
 
         @NotNull(message = "A categoria é obrigatória") String categorias,
 
-        @NotNull(message = "O bairro é obrigatório") String bairro,
+        @NotNull(message = "O bairro é obrigatório") List<String> bairros,
 
         @NotNull(message = "A privacidade é obrigatória") boolean privado,
 
@@ -32,7 +34,6 @@ public record CriarGrupoTematicoRequestDTO(
                 .titulo(titulo)
                 .descricao(descricao)
                 .categorias(Categoria.valueOf(categorias.toUpperCase()))
-                .bairro(bairro)
                 .privado(privado)
                 .numeroParticipantes(numeroParticipantes)
                 .video(video)

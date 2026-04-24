@@ -1,8 +1,11 @@
 package com.maismaes.com.br.dto.request;
 
+import java.util.List;
+
 import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
 
 public record EditarGrupoTematicoRequestDTO(
     @NotBlank 
@@ -14,8 +17,8 @@ public record EditarGrupoTematicoRequestDTO(
     @NotBlank 
     String categorias,
 
-    @NotBlank 
-    String bairro,
+    @NotNull
+    List<String> bairros,
 
     boolean privado,
     

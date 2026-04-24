@@ -40,7 +40,7 @@ public class SecurityConfig {
                         .requestMatchers("/usuario/me").authenticated()
                         .requestMatchers("derleta/me").authenticated()
                         .requestMatchers("/atualizar").authenticated()
-                        .requestMatchers("/grupo-tematico/**").permitAll()
+                        .requestMatchers("/grupo-tematico/**").authenticated()
                         .anyRequest().permitAll())
                 .addFilterBefore(securityFilter, UsernamePasswordAuthenticationFilter.class)
                 .build();

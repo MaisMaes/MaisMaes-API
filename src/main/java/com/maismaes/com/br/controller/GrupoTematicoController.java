@@ -18,9 +18,11 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.maismaes.com.br.dto.request.BuscaGrupoTeamaticoDTO;
+import com.maismaes.com.br.dto.request.CriarGrupoTematicoRequestDTO;
 import com.maismaes.com.br.dto.request.EditarGrupoTematicoRequestDTO;
-import com.maismaes.com.br.dto.request.GrupoTematicoRequestDTO;
+import com.maismaes.com.br.dto.response.EditarGrupoTematicoResponseDTO;
 import com.maismaes.com.br.dto.response.GrupoTematicoResponseDTO;
+import com.maismaes.com.br.dto.response.ListarGrupoTematicoDTO;
 import com.maismaes.com.br.entities.Perfil;
 import com.maismaes.com.br.entities.grupo_tematico.GrupoRole;
 import com.maismaes.com.br.entities.grupo_tematico.GrupoTematico;
@@ -38,13 +40,13 @@ public class GrupoTematicoController {
 
     @PostMapping("/criar")
     public ResponseEntity<GrupoTematicoResponseDTO> criarGrupoTematico(
-            @RequestBody @Valid GrupoTematicoRequestDTO grupoTematicoRequestDTO,
-            @AuthenticationPrincipal Perfil perfilLogado // Verifica pelo spring se o usuário está autenticado e passa o
-
+            @RequestBody @Valid CriarGrupoTematicoRequestDTO grupoTematicoRequestDTO,
+            @AuthenticationPrincipal Perfil perfilLogado 
     ) {
-
+        // Passamos a entidade, a LISTA de bairros (Strings) e o perfil logado
         var grupoCriado = grupoTematicoService.criarGrupoTematico(
                 grupoTematicoRequestDTO.ToGrupoTematicoEntity(),
+                grupoTematicoRequestDTO.bairros(), 
                 perfilLogado);
 
         return ResponseEntity
@@ -63,13 +65,22 @@ public class GrupoTematicoController {
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<String> atualizarGrupo(
+    public ResponseEntity<EditarGrupoTematicoResponseDTO> atualizarGrupo(
             @PathVariable Long id,
             @RequestBody @Valid EditarGrupoTematicoRequestDTO updateDTO,
             @AuthenticationPrincipal Perfil perfilLogado) {
-        grupoTematicoService.atualizarGrupo(id, updateDTO, perfilLogado);
+        
+        GrupoTematico grupo = grupoTematicoService.atualizarGrupo(id, updateDTO, perfilLogado);
 
-        return ResponseEntity.ok("As informações do grupo '" + updateDTO.titulo() + "' foram atualizadas com sucesso!");
+        EditarGrupoTematicoResponseDTO response = new EditarGrupoTematicoResponseDTO(grupo);
+
+        return ResponseEntity.ok(response);
+    }
+
+    @GetMapping
+    public ResponseEntity<List<ListarGrupoTematicoDTO>> listarGrupos() {
+        List<ListarGrupoTematicoDTO> grupos = grupoTematicoService.listarTodos();
+        return ResponseEntity.ok(grupos);
     }
 
     @GetMapping("/pesquisar")

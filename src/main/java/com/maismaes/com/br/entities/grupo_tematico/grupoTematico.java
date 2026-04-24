@@ -1,6 +1,8 @@
 package com.maismaes.com.br.entities.grupo_tematico;
 
+import java.util.ArrayList;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 
 import com.maismaes.com.br.entities.Usuario;
@@ -56,9 +58,6 @@ public class GrupoTematico {
     @Column(name = "categorias", nullable = false)
     private Categoria categorias;
 
-    @Column
-    private String bairro;
-
     @Column(nullable = false)
     @NotNull
     private boolean privado;
@@ -90,5 +89,9 @@ public class GrupoTematico {
     @OneToMany(mappedBy = "grupo", cascade = {CascadeType.ALL, CascadeType.REMOVE}, orphanRemoval = true)
     @Builder.Default // Garante que o Lombok não ignore a inicialização
     private Set<ParticipanteGrupo> participantes = new HashSet<>();
+
+    @OneToMany(mappedBy = "grupo", cascade = CascadeType.ALL, orphanRemoval = true)
+    @Builder.Default
+    private List<Bairro> bairros = new ArrayList<>();
 
 }

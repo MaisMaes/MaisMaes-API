@@ -10,8 +10,10 @@ import org.springframework.stereotype.Service;
 
 import com.maismaes.com.br.dto.request.BuscaGrupoTeamaticoDTO;
 import com.maismaes.com.br.dto.request.EditarGrupoTematicoRequestDTO;
+import com.maismaes.com.br.dto.response.ListarGrupoTematicoDTO;
 import com.maismaes.com.br.entities.Perfil;
 import com.maismaes.com.br.entities.Usuario;
+import com.maismaes.com.br.entities.grupo_tematico.Bairro;
 import com.maismaes.com.br.entities.grupo_tematico.Categoria;
 import com.maismaes.com.br.entities.grupo_tematico.GrupoRole;
 import com.maismaes.com.br.entities.grupo_tematico.GrupoTematico;
@@ -30,20 +32,28 @@ public class GrupoTematicoService {
     private final ParticipanteGrupoRepository participanteGrupoRepository;
 
     @Transactional
-    public GrupoTematico criarGrupoTematico(GrupoTematico grupo, Perfil perfilLogado) {
-
+    public GrupoTematico criarGrupoTematico(GrupoTematico grupo, List<String> nomesBairros, Perfil perfilLogado) {
         Usuario criadora = perfilLogado.getUsuario();
         grupo.setCriador(criadora);
 
-        // ADM vinculada na criação
         ParticipanteGrupo vinculoAdm = ParticipanteGrupo.builder()
                 .grupo(grupo)
                 .role(GrupoRole.CRIADORA)
                 .usuario(criadora)
                 .dataAdesao(LocalDateTime.now())
                 .build();
-
+        
         grupo.getParticipantes().add(vinculoAdm);
+
+        // Transformar List<String> em List<Bairro> vinculando ao grupo
+        List<Bairro> bairrosEntities = nomesBairros.stream()
+                .map(nome -> Bairro.builder()
+                        .nome(nome)
+                        .grupo(grupo)
+                        .build())
+                .toList();
+
+        grupo.setBairros(bairrosEntities);
 
         return grupoTematicoRepository.save(grupo);
     }
@@ -75,13 +85,13 @@ public class GrupoTematicoService {
     }
 
     @Transactional
-    public void atualizarGrupo(Long grupoId, EditarGrupoTematicoRequestDTO dto, Perfil perfilLogado) {
-        // 1. Busca o vínculo de quem está logado
+    public GrupoTematico atualizarGrupo(Long grupoId, EditarGrupoTematicoRequestDTO dto, Perfil perfilLogado) {
+        
         ParticipanteGrupo executor = participanteGrupoRepository
                 .findByGrupoIdAndUsuarioId(grupoId, perfilLogado.getUsuario().getId())
                 .orElseThrow(() -> new RuntimeException("Você não faz parte deste grupo"));
 
-        // Apenas criadora e moderadora podem editar
+        // Apenas criadora e moderadora podem editar(APLICAÇÃO DA ROLE DO GRUPO)
         if (executor.getRole() == GrupoRole.PARTICIPANTE) {
             throw new RuntimeException("Ação negada: Apenas moderadoras ou a criadora podem editar o grupo.");
         }
@@ -93,7 +103,6 @@ public class GrupoTematicoService {
         grupo.setTitulo(dto.titulo());
         grupo.setDescricao(dto.descricao());
         grupo.setCategorias(Categoria.valueOf(dto.categorias().toUpperCase()));
-        grupo.setBairro(dto.bairro());
         grupo.setPrivado(dto.privado());
         grupo.setNumeroParticipantes(dto.numeroParticipantes());
         grupo.setTempoEntreMensagens(dto.tempoEntreMensagens());
@@ -102,6 +111,33 @@ public class GrupoTematicoService {
         grupo.setImagem(dto.imagem());
         grupo.setDocumento(dto.documento());
 
+        //Parte da edição dos bairros
+        List<String> bairrosAtuais = grupo.getBairros().stream()
+            .map(Bairro::getNome)
+            .toList();
+
+        if (dto.bairros() != null && !dto.bairros().isEmpty() && !bairrosAtuais.equals(dto.bairros())) {
+
+            grupo.getBairros().clear();
+            
+            List<Bairro> novosBairros = dto.bairros().stream()
+                .<Bairro>map(nome -> Bairro.builder()
+                        .nome(nome)
+                        .grupo(grupo)
+                        .build())
+                .toList();
+
+            grupo.getBairros().addAll(novosBairros);
+        }  
+
+        return grupoTematicoRepository.save(grupo);
+    }
+
+    public List<ListarGrupoTematicoDTO> listarTodos() {
+        return grupoTematicoRepository.findAll()
+                .stream()
+                .map(ListarGrupoTematicoDTO::new)
+                .toList();
     }
 
     public List<GrupoTematico> buscarGrupos(BuscaGrupoTeamaticoDTO filtro) {
