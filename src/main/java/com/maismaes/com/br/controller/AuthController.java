@@ -65,7 +65,7 @@ public class AuthController {
             description = "Valida o código recebido por e-mail e atualiza a senha do usuário."
     )
     public ResponseEntity<Map<String, String>> redefinirSenha(@RequestBody @Valid RedefinirSenhaRequestDTO request) {
-        recuperacaoSenhaService.redefinirSenha(request.email(), request.codigo(), request.novaSenha());
+        recuperacaoSenhaService.redefinirSenha(request.codigo(), request.novaSenha());
         return ResponseEntity
                 .status(HttpStatus.OK)
                 .body(Map.of("mensagem", "Senha redefinida com sucesso."));

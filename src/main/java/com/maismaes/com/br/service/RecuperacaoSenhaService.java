@@ -26,53 +26,60 @@ public class RecuperacaoSenhaService {
     private long expiracaoMinutos;
 
     private static final SecureRandom RANDOM = new SecureRandom();
-    private final Map<String, CodigoRecuperacao> codigosPorEmail = new ConcurrentHashMap<>();
+    private static final int MAX_TENTATIVAS_GERACAO = 5;
+
+    private final Map<String, CodigoRecuperacao> codigos = new ConcurrentHashMap<>();
 
     public void solicitarRecuperacao(String email) {
         Perfil perfil = perfilRepository.findByPerfilEmail(email);
+        // Por segurança, não revelamos se o e-mail existe ou não.
         if (perfil == null) {
             return;
         }
 
-        String codigo = gerarCodigo();
+        codigos.values().removeIf(reg -> reg.email().equalsIgnoreCase(email));
+
+        String codigo = gerarCodigoUnico();
         Instant expiraEm = Instant.now().plus(expiracaoMinutos, ChronoUnit.MINUTES);
-        codigosPorEmail.put(email, new CodigoRecuperacao(codigo, expiraEm));
+        codigos.put(codigo, new CodigoRecuperacao(email, expiraEm));
 
         emailService.enviarCodigoRecuperacao(email, codigo);
     }
 
-    public void redefinirSenha(String email, String codigo, String novaSenha) {
-        CodigoRecuperacao registro = codigosPorEmail.get(email);
+    public void redefinirSenha(String codigo, String novaSenha) {
+        CodigoRecuperacao registro = codigos.get(codigo);
 
         if (registro == null) {
             throw new CodigoRecuperacaoInvalidoException("Código inválido ou expirado");
         }
 
         if (registro.expiraEm().isBefore(Instant.now())) {
-            codigosPorEmail.remove(email);
+            codigos.remove(codigo);
             throw new CodigoRecuperacaoInvalidoException("Código inválido ou expirado");
         }
 
-        if (!registro.codigo().equals(codigo)) {
-            throw new CodigoRecuperacaoInvalidoException("Código inválido ou expirado");
-        }
-
-        Perfil perfil = perfilRepository.findByPerfilEmail(email);
+        Perfil perfil = perfilRepository.findByPerfilEmail(registro.email());
         if (perfil == null) {
+            codigos.remove(codigo);
             throw new CodigoRecuperacaoInvalidoException("Código inválido ou expirado");
         }
 
         perfil.setSenha(passwordEncoder.encode(novaSenha));
         perfilRepository.save(perfil);
-        codigosPorEmail.remove(email);
+        codigos.remove(codigo);
     }
 
-    private String gerarCodigo() {
-        int valor = RANDOM.nextInt(1_000_000);
-        return String.format("%06d", valor);
+    private String gerarCodigoUnico() {
+        for (int i = 0; i < MAX_TENTATIVAS_GERACAO; i++) {
+            String codigo = String.format("%06d", RANDOM.nextInt(1_000_000));
+            if (!codigos.containsKey(codigo)) {
+                return codigo;
+            }
+        }
+        return String.format("%06d", RANDOM.nextInt(1_000_000));
     }
 
-    private record CodigoRecuperacao(String codigo, Instant expiraEm) {
+    private record CodigoRecuperacao(String email, Instant expiraEm) {
     }
 }
 
