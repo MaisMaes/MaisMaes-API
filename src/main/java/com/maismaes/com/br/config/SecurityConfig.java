@@ -53,7 +53,9 @@ public class SecurityConfig {
 
         configuration.setAllowedOrigins(Arrays
                 .asList("http://localhost:8082",
-                        "http://localhost:8081"));
+                        "http://localhost:8081",
+                        "http://10.187.133.135:8081",
+                        "http://192.168.1.100:8081"));
         configuration.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "DELETE"));
         configuration.setAllowedHeaders(List.of("Authorization", "Content-Type"));
         configuration.setAllowCredentials(true);
@@ -73,5 +75,4 @@ public class SecurityConfig {
             throws Exception {
         return authenticationConfiguration.getAuthenticationManager();
     }
-
 }
