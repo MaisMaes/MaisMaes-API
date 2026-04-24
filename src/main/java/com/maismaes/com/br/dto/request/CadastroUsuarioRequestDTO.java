@@ -3,6 +3,7 @@ package com.maismaes.com.br.dto.request;
 import com.maismaes.com.br.entities.Perfil;
 import com.maismaes.com.br.entities.Role;
 import com.maismaes.com.br.entities.Usuario;
+
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Pattern;
