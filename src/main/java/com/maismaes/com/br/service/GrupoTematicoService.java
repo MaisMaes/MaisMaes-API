@@ -1,14 +1,13 @@
 package com.maismaes.com.br.service;
 
 import java.time.LocalDateTime;
-import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 import java.util.UUID;
-import java.util.function.Predicate;
 
 import org.springframework.stereotype.Service;
 
-import com.maismaes.com.br.dto.request.BuscaGrupoTeamaticoDTO;
 import com.maismaes.com.br.dto.request.EditarGrupoTematicoRequestDTO;
 import com.maismaes.com.br.dto.response.ListarGrupoTematicoDTO;
 import com.maismaes.com.br.entities.Perfil;
@@ -140,33 +139,48 @@ public class GrupoTematicoService {
                 .toList();
     }
 
-    public List<GrupoTematico> buscarGrupos(BuscaGrupoTeamaticoDTO filtro) {
-        return grupoTematicoRepository.findAll((root, query, cb) -> {
-            List<Predicate> predicates = new ArrayList<>();
+    //Pesquisa global sem filtros
+    public List<ListarGrupoTematicoDTO> pesquisarGrupoTematico(String termo) {
+        if (termo == null || termo.trim().isEmpty()) {
+            throw new RuntimeException("Nenhum grupo encontrado");
+        }
 
-            if (filtro.id() != null) {
-                predicates.add((Predicate) cb.equal(root.get("id"), filtro.id()));
+        String busca = termo.trim();
+        Set<GrupoTematico> resultados = new HashSet<>();
+
+        try {
+
+            if (busca.matches("\\d+")) { 
+                grupoTematicoRepository.findById(Long.parseLong(busca)).ifPresent(resultados::add);
             }
 
-            if (filtro.titulo() != null && !filtro.titulo().isBlank()) {
-                predicates.add(
-                        (Predicate) cb.like(cb.lower(root.get("titulo")), "%" + filtro.titulo().toLowerCase() + "%"));
+            try {
+                Categoria categoria = Categoria.valueOf(busca.toUpperCase());
+                resultados.addAll(grupoTematicoRepository.findByCategorias(categoria));
+            } catch (IllegalArgumentException e) {
+
             }
 
-            if (filtro.categorias() != null && !filtro.categorias().isBlank()) {
-                predicates.add((Predicate) cb.equal(root.get("categorias"),
-                        Categoria.valueOf(filtro.categorias().toUpperCase())));
+            resultados.addAll(grupoTematicoRepository.findByTituloContainingIgnoreCase(busca));
+
+            resultados.addAll(grupoTematicoRepository.buscarPorNomeBairro(busca));
+
+            if (resultados.isEmpty()) {
+                throw new RuntimeException("Nenhum grupo encontrado");
             }
 
-            if (filtro.bairro() != null && !filtro.bairro().isBlank()) {
-                predicates.add(
-                        (Predicate) cb.like(cb.lower(root.get("bairro")), "%" + filtro.bairro().toLowerCase() + "%"));
-            }
+            return resultados.stream()
+                    .map(ListarGrupoTematicoDTO::new)
+                    .toList();
 
-            return cb.and((jakarta.persistence.criteria.Predicate[]) predicates.toArray(new Predicate[0]));
-        });
+        } catch (RuntimeException e) {
+            throw e; 
+        } catch (Exception e) {
+            throw new RuntimeException("Erro inesperado ao realizar a pesquisa");
+        }
     }
 
+    //excluir
     @Transactional
     public void excluirGrupo(Long grupoId, Perfil perfilLogado) {
 

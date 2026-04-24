@@ -17,7 +17,6 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
-import com.maismaes.com.br.dto.request.BuscaGrupoTeamaticoDTO;
 import com.maismaes.com.br.dto.request.CriarGrupoTematicoRequestDTO;
 import com.maismaes.com.br.dto.request.EditarGrupoTematicoRequestDTO;
 import com.maismaes.com.br.dto.response.EditarGrupoTematicoResponseDTO;
@@ -64,7 +63,8 @@ public class GrupoTematicoController {
         return ResponseEntity.ok("Privilégio atualizado com sucesso!");
     }
 
-    @PutMapping("/{id}")
+    //Editar grupo
+    @PutMapping("/editar/{id}")
     public ResponseEntity<EditarGrupoTematicoResponseDTO> atualizarGrupo(
             @PathVariable Long id,
             @RequestBody @Valid EditarGrupoTematicoRequestDTO updateDTO,
@@ -77,30 +77,21 @@ public class GrupoTematicoController {
         return ResponseEntity.ok(response);
     }
 
+    //Listar todos os grupos
     @GetMapping
     public ResponseEntity<List<ListarGrupoTematicoDTO>> listarGrupos() {
         List<ListarGrupoTematicoDTO> grupos = grupoTematicoService.listarTodos();
         return ResponseEntity.ok(grupos);
     }
 
+    //Pesquisar grupos(GLOBAL)
     @GetMapping("/pesquisar")
-    public ResponseEntity<?> pesquisar(BuscaGrupoTeamaticoDTO filtro) {
-        try {
-            List<GrupoTematico> grupos = grupoTematicoService.buscarGrupos(filtro);
-
-            if (grupos.isEmpty()) {
-                return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Nenhum grupo encontrado");
-            }
-
-            return ResponseEntity.ok(grupos);
-
-        } catch (Exception e) {
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                    .body("Erro inesperado: Falha ao realizar a pesquisa.");
-        }
+    public ResponseEntity<List<ListarGrupoTematicoDTO>> pesquisar(@RequestParam(required = false) String termo) {
+        return ResponseEntity.ok(grupoTematicoService.pesquisarGrupoTematico(termo));
     }
 
-    @DeleteMapping("/{id}")
+    //Deletar grupo
+    @DeleteMapping("/excluir/{id}")
     public ResponseEntity<String> excluirGrupo(
             @PathVariable Long id,
             @AuthenticationPrincipal Perfil perfilLogado) {
