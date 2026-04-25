@@ -15,6 +15,13 @@ import java.util.Objects;
 @RestControllerAdvice
 public class GeneralExceptionHandler {
 
+    @ExceptionHandler(RuntimeException.class)
+    public ResponseEntity<HashMap<String, String>> handleRuntimeException(RuntimeException e){
+        return ResponseEntity
+                .status(HttpStatus.BAD_REQUEST)
+                .body(montaMensagemErro(Objects.requireNonNull(e.getMessage())));
+    }
+
     @ExceptionHandler(MethodArgumentNotValidException.class)
     public ResponseEntity<HashMap<String, String>> handleConstraintDeclarationException(MethodArgumentNotValidException e){
         return ResponseEntity
@@ -55,7 +62,6 @@ public class GeneralExceptionHandler {
                 .status(HttpStatus.CONFLICT)
                 .body(montaMensagemErro(e.getMessage()));
     }
-
 
     @ExceptionHandler(CodigoRecuperacaoInvalidoException.class)
     public ResponseEntity<HashMap<String, String>> handleCodigoRecuperacaoInvalidoException(

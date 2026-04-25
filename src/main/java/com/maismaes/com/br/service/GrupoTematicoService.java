@@ -135,7 +135,44 @@ public class GrupoTematicoService {
         return grupoTematicoRepository.save(grupo);
     }
 
-    //Listar todos os grupos
+    //Entrar em um grupo
+    @Transactional
+    public void entrarNoGrupo(Long grupoId, Perfil perfilLogado) {
+        GrupoTematico grupo = grupoTematicoRepository.findById(grupoId)
+                .orElseThrow(() -> new RuntimeException("Grupo não encontrado."));
+
+        Usuario usuario = perfilLogado.getUsuario();
+
+        if (participanteGrupoRepository.existsByGrupoIdAndUsuarioId(grupoId, usuario.getId())) {
+            throw new RuntimeException("Você já é participante deste grupo.");
+        }
+
+        int lotacaoMaxima = grupo.getNumeroParticipantes();
+        int participantesAtuais = grupo.getParticipantes().size();
+        if (participantesAtuais >= lotacaoMaxima) {
+            throw new RuntimeException("Grupo lotado: número máximo de participantes atingido.");
+        }
+
+        ParticipanteGrupo vinculo = ParticipanteGrupo.builder()
+                .grupo(grupo)
+                .usuario(usuario)
+                .role(GrupoRole.PARTICIPANTE)
+                .dataAdesao(LocalDateTime.now())
+                .build();
+
+        participanteGrupoRepository.save(vinculo);
+    }
+
+    //Listar grupos que o usuário participa
+    public List<ListarGrupoTematicoDTO> listarGruposDoUsuario(Perfil perfilLogado) {
+        return participanteGrupoRepository
+                .findByUsuarioId(perfilLogado.getUsuario().getId())
+                .stream()
+                .map(ParticipanteGrupo::getGrupo)
+                .map(ListarGrupoTematicoDTO::new)
+                .toList();
+    }
+
     public List<ListarGrupoTematicoDTO> listarTodos() {
         return grupoTematicoRepository.findAll()
                 .stream()
