@@ -1,5 +1,6 @@
 package com.maismaes.com.br.config;
 
+import java.util.Arrays;
 import java.util.List;
 
 import org.springframework.context.annotation.Bean;
@@ -37,6 +38,10 @@ public class SecurityConfig {
                 .authorizeHttpRequests(autorize-> autorize
                         .requestMatchers("/h2-console/**").permitAll()  // Permite o acesso ao H2 Console
                         .requestMatchers("/swagger-ui/**", "/v3/api-docs/**").permitAll()
+                        .requestMatchers("/auth/login").permitAll()
+                        .requestMatchers("/auth/recuperar-senha").permitAll()
+                        .requestMatchers("/auth/redefinir-senha").permitAll()
+                        .requestMatchers("/usuario/cadastro").permitAll()
                         .requestMatchers("/usuario/me").authenticated()
                         .requestMatchers("derleta/me").authenticated()
                         .requestMatchers("/atualizar").authenticated()
@@ -49,12 +54,11 @@ public class SecurityConfig {
     @Bean
     public CorsConfigurationSource corsConfigurationSource(){
         CorsConfiguration corsConfiguration = new CorsConfiguration();
-        corsConfiguration.setAllowedOrigins(List.of(
-                "http://localhost:3000",
-                "http://localhost:5173",
-                "http://localhost:9090",
-                "http://localhost:8081"
-        ));
+        corsConfiguration.setAllowedOrigins(Arrays
+                .asList("http://localhost:8082",
+                        "http://localhost:8081",
+                        "http://10.187.133.135:8081",
+                        "http://192.168.1.100:8081"));
         corsConfiguration.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "PATCH"));
         corsConfiguration.setAllowedHeaders(List.of("Authorization", "Content-Type"));
         corsConfiguration.setAllowCredentials(true);
