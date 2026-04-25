@@ -78,7 +78,7 @@ public class GrupoTematicoController {
     }
 
     //Listar todos os grupos
-    @GetMapping
+    @GetMapping("/listar")
     public ResponseEntity<List<ListarGrupoTematicoDTO>> listarGrupos() {
         List<ListarGrupoTematicoDTO> grupos = grupoTematicoService.listarTodos();
         return ResponseEntity.ok(grupos);
