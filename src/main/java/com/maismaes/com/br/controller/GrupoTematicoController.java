@@ -88,7 +88,7 @@ public class GrupoTematicoController {
     }
 
     //Buscar grupo peli id - detalhe do grupo
-    @GetMapping("/{id}")
+    @GetMapping("/detalhes/{id}")
     public ResponseEntity<DetalheGrupoResponseDTO> buscarDetalhes(
             @PathVariable Long id, 
             @AuthenticationPrincipal Perfil perfilLogado) {

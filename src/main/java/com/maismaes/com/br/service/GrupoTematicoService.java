@@ -199,8 +199,13 @@ public class GrupoTematicoService {
             ))
             .toList();
 
-        boolean isParticipante = grupo.getParticipantes().stream()
-            .anyMatch(p -> p.getUsuario().getId().equals(usuarioLogadoId));
+        var participanteLogado = grupo.getParticipantes().stream()
+            .filter(p -> p.getUsuario().getId().equals(usuarioLogadoId))
+            .findFirst();
+
+        boolean isParticipante = participanteLogado.isPresent();
+        
+        String roleLogada = participanteLogado.map(p -> p.getRole().name()).orElse(null);
 
         return new DetalheGrupoResponseDTO(
             grupo.getId(),
@@ -216,7 +221,8 @@ public class GrupoTematicoService {
             grupo.isDocumento(),
             nomesBairros,
             participantes,
-            isParticipante
+            isParticipante,
+            roleLogada 
         );
     }
 
