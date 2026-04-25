@@ -6,9 +6,9 @@ import java.util.UUID;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
@@ -19,11 +19,11 @@ import org.springframework.web.bind.annotation.RestController;
 
 import com.maismaes.com.br.dto.request.CriarGrupoTematicoRequestDTO;
 import com.maismaes.com.br.dto.request.EditarGrupoTematicoRequestDTO;
+import com.maismaes.com.br.dto.response.DetalheGrupoResponseDTO;
 import com.maismaes.com.br.dto.response.EditarGrupoTematicoResponseDTO;
 import com.maismaes.com.br.dto.response.GrupoTematicoResponseDTO;
 import com.maismaes.com.br.dto.response.ListarGrupoTematicoDTO;
 import com.maismaes.com.br.entities.Perfil;
-import com.maismaes.com.br.entities.grupo_tematico.GrupoRole;
 import com.maismaes.com.br.entities.grupo_tematico.GrupoTematico;
 import com.maismaes.com.br.service.GrupoTematicoService;
 
@@ -32,6 +32,7 @@ import lombok.RequiredArgsConstructor;
 
 @RequiredArgsConstructor
 @RestController
+@CrossOrigin(origins = "*", allowedHeaders = "*")
 @RequestMapping("grupo-tematico")
 public class GrupoTematicoController {
 
@@ -53,15 +54,15 @@ public class GrupoTematicoController {
                 .body(new GrupoTematicoResponseDTO(grupoCriado.getId()));
     }
 
-    @PatchMapping("/{grupoId}/membros/{usuarioId}/privilegio")
-    public ResponseEntity<String> mudarPrivilegio(
-            @PathVariable Long grupoId,
-            @PathVariable UUID usuarioId,
-            @RequestParam GrupoRole novaRole,
-            @AuthenticationPrincipal Perfil perfilLogado) {
-        grupoTematicoService.alterarPrivilegio(grupoId, usuarioId, novaRole, perfilLogado);
-        return ResponseEntity.ok("Privilégio atualizado com sucesso!");
-    }
+    // @PatchMapping("/{grupoId}/membros/{usuarioId}/privilegio")
+    // public ResponseEntity<String> mudarPrivilegio(
+    //         @PathVariable Long grupoId,
+    //         @PathVariable UUID usuarioId,
+    //         @RequestParam GrupoRole novaRole,
+    //         @AuthenticationPrincipal Perfil perfilLogado) {
+    //     grupoTematicoService.alterarPrivilegio(grupoId, usuarioId, novaRole, perfilLogado);
+    //     return ResponseEntity.ok("Privilégio atualizado com sucesso!");
+    // }
 
     //Editar grupo
     @PutMapping("/editar/{id}")
@@ -78,10 +79,23 @@ public class GrupoTematicoController {
     }
 
     //Listar todos os grupos
-    @GetMapping
+    @GetMapping("/listar")
     public ResponseEntity<List<ListarGrupoTematicoDTO>> listarGrupos() {
         List<ListarGrupoTematicoDTO> grupos = grupoTematicoService.listarTodos();
         return ResponseEntity.ok(grupos);
+    }
+
+    //Buscar grupo peli id - detalhe do grupo
+    @GetMapping("/{id}")
+    public ResponseEntity<DetalheGrupoResponseDTO> buscarDetalhes(
+            @PathVariable Long id, 
+            @AuthenticationPrincipal Perfil perfilLogado) {
+        
+        UUID usuarioLogadoId = perfilLogado.getUsuario().getId();
+        
+        DetalheGrupoResponseDTO response = grupoTematicoService.obterDetalhes(id, usuarioLogadoId);
+        
+        return ResponseEntity.ok(response);
     }
 
     //Pesquisar grupos(GLOBAL)

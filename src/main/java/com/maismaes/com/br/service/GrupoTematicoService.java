@@ -9,7 +9,9 @@ import java.util.UUID;
 import org.springframework.stereotype.Service;
 
 import com.maismaes.com.br.dto.request.EditarGrupoTematicoRequestDTO;
+import com.maismaes.com.br.dto.response.DetalheGrupoResponseDTO;
 import com.maismaes.com.br.dto.response.ListarGrupoTematicoDTO;
+import com.maismaes.com.br.dto.response.ParticipanteGrupoResumoResponseDTO;
 import com.maismaes.com.br.entities.Perfil;
 import com.maismaes.com.br.entities.Usuario;
 import com.maismaes.com.br.entities.grupo_tematico.Bairro;
@@ -57,32 +59,33 @@ public class GrupoTematicoService {
         return grupoTematicoRepository.save(grupo);
     }
 
-    @Transactional
-    public void alterarPrivilegio(Long grupoId, UUID usuarioAlvoId, GrupoRole novoCargo, Perfil perfilLogado) {
+    // @Transactional
+    // public void alterarPrivilegio(Long grupoId, UUID usuarioAlvoId, GrupoRole novoCargo, Perfil perfilLogado) {
 
-        Usuario perfilExecutor = perfilLogado.getUsuario();
+    //     Usuario perfilExecutor = perfilLogado.getUsuario();
 
-        // System.out.println("Perfil Executor: " + perfilExecutor.getId());
+    //     // System.out.println("Perfil Executor: " + perfilExecutor.getId());
 
-        ParticipanteGrupo executor = participanteGrupoRepository
-                .findByGrupoIdAndUsuarioId(grupoId, perfilExecutor.getId())
-                .orElseThrow(() -> new RuntimeException("Você não faz parte deste grupo"));
+    //     ParticipanteGrupo executor = participanteGrupoRepository
+    //             .findByGrupoIdAndUsuarioId(grupoId, perfilExecutor.getId())
+    //             .orElseThrow(() -> new RuntimeException("Você não faz parte deste grupo"));
 
-        if (executor.getRole() != GrupoRole.CRIADORA) {
-            throw new RuntimeException("Ação negada: Apenas a dona do grupo pode gerenciar moderadores.");
-        }
+    //     if (executor.getRole() != GrupoRole.CRIADORA) {
+    //         throw new RuntimeException("Ação negada: Apenas a dona do grupo pode gerenciar moderadores.");
+    //     }
 
-        ParticipanteGrupo alvo = participanteGrupoRepository
-                .findByGrupoIdAndUsuarioId(grupoId, usuarioAlvoId)
-                .orElseThrow(() -> new RuntimeException("Usuária alvo não encontrada neste grupo."));
+    //     ParticipanteGrupo alvo = participanteGrupoRepository
+    //             .findByGrupoIdAndUsuarioId(grupoId, usuarioAlvoId)
+    //             .orElseThrow(() -> new RuntimeException("Usuária alvo não encontrada neste grupo."));
 
-        if (alvo.getUsuario().getId().equals(perfilExecutor.getId()) && novoCargo != GrupoRole.CRIADORA) {
-            throw new RuntimeException("A criadora não pode abdicar do seu cargo desta forma.");
-        }
+    //     if (alvo.getUsuario().getId().equals(perfilExecutor.getId()) && novoCargo != GrupoRole.CRIADORA) {
+    //         throw new RuntimeException("A criadora não pode abdicar do seu cargo desta forma.");
+    //     }
 
-        alvo.setRole(novoCargo);
-    }
+    //     alvo.setRole(novoCargo);
+    // }
 
+    // Editar grupo
     @Transactional
     public GrupoTematico atualizarGrupo(Long grupoId, EditarGrupoTematicoRequestDTO dto, Perfil perfilLogado) {
         
@@ -132,11 +135,52 @@ public class GrupoTematicoService {
         return grupoTematicoRepository.save(grupo);
     }
 
+    //Listar todos os grupos
     public List<ListarGrupoTematicoDTO> listarTodos() {
         return grupoTematicoRepository.findAll()
                 .stream()
                 .map(ListarGrupoTematicoDTO::new)
                 .toList();
+    }
+
+    //Obter grupo especifico - detalhe do grupo
+    @Transactional 
+    public DetalheGrupoResponseDTO obterDetalhes(Long grupoId, UUID usuarioLogadoId) {
+        
+        GrupoTematico grupo = grupoTematicoRepository.findById(grupoId)
+            .orElseThrow(() -> new RuntimeException("Grupo não encontrado"));
+
+        List<String> nomesBairros = grupo.getBairros().stream()
+            .map(Bairro::getNome) 
+            .toList();
+
+        List<ParticipanteGrupoResumoResponseDTO> participantes = grupo.getParticipantes().stream()
+            .map(p -> new ParticipanteGrupoResumoResponseDTO(
+                p.getUsuario().getId(), 
+                p.getUsuario().getNome(),
+                p.getRole().name()
+            ))
+            .toList();
+
+        boolean isParticipante = grupo.getParticipantes().stream()
+            .anyMatch(p -> p.getUsuario().getId().equals(usuarioLogadoId));
+
+        return new DetalheGrupoResponseDTO(
+            grupo.getId(),
+            grupo.getTitulo(),
+            grupo.getDescricao(),
+            grupo.getCategorias().name(),
+            grupo.isPrivado(),
+            grupo.getNumeroParticipantes(),
+            grupo.getTempoEntreMensagens(),
+            grupo.isVideo(),
+            grupo.isAudio(),
+            grupo.isImagem(),
+            grupo.isDocumento(),
+            nomesBairros,
+            participantes,
+            isParticipante
+        );
     }
 
     //Pesquisa global sem filtros
