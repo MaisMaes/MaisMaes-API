@@ -29,7 +29,9 @@ import com.maismaes.com.br.service.GrupoTematicoService;
 
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 
+@Slf4j
 @RequiredArgsConstructor
 @RestController
 @CrossOrigin(origins = "*", allowedHeaders = "*")
@@ -102,6 +104,23 @@ public class GrupoTematicoController {
     @GetMapping("/pesquisar")
     public ResponseEntity<List<ListarGrupoTematicoDTO>> pesquisar(@RequestParam(required = false) String termo) {
         return ResponseEntity.ok(grupoTematicoService.pesquisarGrupoTematico(termo));
+    }
+
+    //Entrar em um grupo
+    @PostMapping("/{id}/entrar")
+    public ResponseEntity<String> entrarNoGrupo(
+            @PathVariable Long id,
+            @AuthenticationPrincipal Perfil perfilLogado) {
+        log.info("[REQUISIÇÃO] - Chegada de chamda para entrar em grupo");
+        grupoTematicoService.entrarNoGrupo(id, perfilLogado);
+        return ResponseEntity.ok("Você entrou no grupo com sucesso!");
+    }
+
+    //Listar grupos que o usuário participa
+    @GetMapping("/meus-grupos")
+    public ResponseEntity<List<ListarGrupoTematicoDTO>> meusGrupos(
+            @AuthenticationPrincipal Perfil perfilLogado) {
+        return ResponseEntity.ok(grupoTematicoService.listarGruposDoUsuario(perfilLogado));
     }
 
     //Deletar grupo
