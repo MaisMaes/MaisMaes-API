@@ -10,7 +10,7 @@ spring:
 
   jpa:
     hibernate:
-      ddl-auto: create-drop
+      ddl-auto: update
     show-sql: true
     properties:
       hibernate:
@@ -19,3 +19,25 @@ spring:
 
 security:
   secret: maismaes
+
+mail:
+  host: ${MAIL_HOST:smtp.gmail.com}
+  port: ${MAIL_PORT:587}
+  username: ${MAIL_USERNAME:seu-email@gmail.com}
+  password: ${MAIL_PASSWORD:sua-senha-de-app}
+  from: ${MAIL_FROM:nao-responda@maismaes.com.br}
+
+spring.mail:
+  host: ${MAIL_HOST:smtp.gmail.com}
+  port: ${MAIL_PORT:587}
+  username: ${MAIL_USERNAME:seu-email@gmail.com}
+  password: ${MAIL_PASSWORD:sua-senha-de-app}
+  properties:
+    mail:
+      smtp:
+        auth: true
+        starttls:
+          enable: true
+
+recuperacao-senha:
+  expiracao-minutos: 10

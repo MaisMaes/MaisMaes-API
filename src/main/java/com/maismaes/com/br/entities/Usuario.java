@@ -1,27 +1,31 @@
 package com.maismaes.com.br.entities;
 
 import jakarta.persistence.*;
-import lombok.*;
-
 import java.util.UUID;
+import lombok.*;
 
 @Builder
 @Getter
+@Setter
 @Entity
 @Table(name = "usuarios")
 @NoArgsConstructor
 @AllArgsConstructor
 public class Usuario {
 
-    @Id
-    @GeneratedValue(strategy = GenerationType.UUID)
-    private UUID id;
+  @Id
+  @GeneratedValue(strategy = GenerationType.UUID)
+  private UUID id;
 
-    private String nome;
-    private String email;
-    private String telefone;
+  private String nome;
 
-    @OneToOne(fetch = FetchType.LAZY, optional = false, cascade = CascadeType.PERSIST)
-    @JoinColumn(name = "perfil_id", nullable = false, unique = true)
-    private Perfil perfil;
+  @Column(unique = true, nullable = false)
+  private String email;
+
+  @Column(unique = true, nullable = false)
+  private String telefone;
+
+  @OneToOne(fetch = FetchType.LAZY, optional = false, cascade = CascadeType.PERSIST)
+  @JoinColumn(name = "perfil_id", nullable = false, unique = true)
+  private Perfil perfil;
 }
