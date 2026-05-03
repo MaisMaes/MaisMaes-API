@@ -11,10 +11,8 @@ public record AtualizaDadosContaDTO(
         String nome,
 
 
-        @Pattern(
-                regexp = "^(\\d{2}\\s9\\d{8})?$",
-                message = "Telefone deve estar no formato: XX 9XXXXXXXX"
-        )
+        @Pattern(regexp = "^\\(\\d{2}\\)\\s9\\d{4}-\\d{4}$",
+                message = "Telefone deve estar no formato: (XX) 9XXXX-XXXX")
         String telefone,
 
 
@@ -26,7 +24,6 @@ public record AtualizaDadosContaDTO(
 
         @Email(message = "Email inválido")
         String email
-
 
 ) {
 }

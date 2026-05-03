@@ -59,32 +59,6 @@ public class GrupoTematicoService {
         return grupoTematicoRepository.save(grupo);
     }
 
-    // @Transactional
-    // public void alterarPrivilegio(Long grupoId, UUID usuarioAlvoId, GrupoRole novoCargo, Perfil perfilLogado) {
-
-    //     Usuario perfilExecutor = perfilLogado.getUsuario();
-
-    //     // System.out.println("Perfil Executor: " + perfilExecutor.getId());
-
-    //     ParticipanteGrupo executor = participanteGrupoRepository
-    //             .findByGrupoIdAndUsuarioId(grupoId, perfilExecutor.getId())
-    //             .orElseThrow(() -> new RuntimeException("Você não faz parte deste grupo"));
-
-    //     if (executor.getRole() != GrupoRole.CRIADORA) {
-    //         throw new RuntimeException("Ação negada: Apenas a dona do grupo pode gerenciar moderadores.");
-    //     }
-
-    //     ParticipanteGrupo alvo = participanteGrupoRepository
-    //             .findByGrupoIdAndUsuarioId(grupoId, usuarioAlvoId)
-    //             .orElseThrow(() -> new RuntimeException("Usuária alvo não encontrada neste grupo."));
-
-    //     if (alvo.getUsuario().getId().equals(perfilExecutor.getId()) && novoCargo != GrupoRole.CRIADORA) {
-    //         throw new RuntimeException("A criadora não pode abdicar do seu cargo desta forma.");
-    //     }
-
-    //     alvo.setRole(novoCargo);
-    // }
-
     // Editar grupo
     @Transactional
     public GrupoTematico atualizarGrupo(Long grupoId, EditarGrupoTematicoRequestDTO dto, Perfil perfilLogado) {

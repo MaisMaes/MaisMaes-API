@@ -58,7 +58,8 @@ public class SecurityConfig {
                 .asList("http://localhost:8082",
                         "http://localhost:8081",
                         "http://10.187.133.135:8081",
-                        "http://192.168.1.100:8081"));
+                        "http://192.168.1.100:8081",
+                        "http://192.168.137.194:8081"));
         corsConfiguration.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "PATCH"));
         corsConfiguration.setAllowedHeaders(List.of("Authorization", "Content-Type"));
         corsConfiguration.setAllowCredentials(true);
