@@ -19,6 +19,7 @@ import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
+import static org.mockito.ArgumentMatchers.any;
 
 @ExtendWith(MockitoExtension.class)
 @DisplayName("UsuarioService - testes unitários")
@@ -26,6 +27,15 @@ class UsuarioServiceTest {
 
     @Mock
     private UsuarioRepository usuarioRepository;
+
+    @Mock
+    private com.maismaes.com.br.utils.UserValidationUtils userValidationUtils;
+
+    @Mock
+    private com.maismaes.com.br.repository.PerfilRepository perfilRepository;
+
+    @Mock
+    private org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder bCryptPasswordEncoder;
 
     @InjectMocks
     private UsuarioService usuarioService;
@@ -68,14 +78,12 @@ class UsuarioServiceTest {
         }
 
         @Test
-        @DisplayName("Deve retornar nulo quando receber nulo e o repositório retornar nulo")
-        void deveRetornarNuloQuandoEntradaForNulaERepositorioRetornarNulo() {
-            when(usuarioRepository.save(null)).thenReturn(null);
+        @DisplayName("Deve lançar NullPointerException quando usuário for nulo")
+        void deveLancarExcecaoQuandoUsuarioForNulo() {
+            assertThrows(NullPointerException.class,
+                    () -> usuarioService.cadastrarUsuario(null));
 
-            Usuario resultado = usuarioService.cadastrarUsuario(null);
-
-            assertNull(resultado);
-            verify(usuarioRepository, times(1)).save(null);
+            verify(usuarioRepository, never()).save(any());
         }
     }
 
