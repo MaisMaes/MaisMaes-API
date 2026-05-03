@@ -1,9 +1,8 @@
 package com.maismaes.com.br.entities;
 
 import jakarta.persistence.*;
-import lombok.*;
-
 import java.util.UUID;
+import lombok.*;
 
 @Builder
 @Getter
@@ -14,19 +13,19 @@ import java.util.UUID;
 @AllArgsConstructor
 public class Usuario {
 
-    @Id
-    @GeneratedValue(strategy = GenerationType.UUID)
-    private UUID id;
+  @Id
+  @GeneratedValue(strategy = GenerationType.UUID)
+  private UUID id;
 
-    private String nome;
+  private String nome;
 
-    @Column(unique = true, nullable = false)
-    private String email;
+  @Column(unique = true, nullable = false)
+  private String email;
 
-    @Column(unique = true, nullable = false)
-    private String telefone;
+  @Column(unique = true, nullable = false)
+  private String telefone;
 
-    @OneToOne(fetch = FetchType.LAZY, optional = false, cascade = CascadeType.PERSIST)
-    @JoinColumn(name = "perfil_id", nullable = false, unique = true)
-    private Perfil perfil;
+  @OneToOne(fetch = FetchType.LAZY, optional = false, cascade = CascadeType.PERSIST)
+  @JoinColumn(name = "perfil_id", nullable = false, unique = true)
+  private Perfil perfil;
 }

@@ -1,7 +1,6 @@
 package com.maismaes.com.br.entities.grupo_tematico;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
-
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
@@ -24,15 +23,15 @@ import lombok.Setter;
 @NoArgsConstructor
 @AllArgsConstructor
 public class Bairro {
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
+  @Id
+  @GeneratedValue(strategy = GenerationType.IDENTITY)
+  private Long id;
 
-    @Column(nullable = false)
-    private String nome;
+  @Column(nullable = false)
+  private String nome;
 
-    @ManyToOne
-    @JsonIgnore
-    @JoinColumn(name = "grupo_id", nullable = false)
-    private GrupoTematico grupo;
+  @ManyToOne
+  @JsonIgnore
+  @JoinColumn(name = "grupo_id", nullable = false)
+  private GrupoTematico grupo;
 }

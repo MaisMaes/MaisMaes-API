@@ -11,10 +11,10 @@ import org.springframework.stereotype.Service;
 @Service
 public class AuthService implements UserDetailsService {
 
-    private final PerfilRepository perfilRepository;
+  private final PerfilRepository perfilRepository;
 
-    @Override
-    public UserDetails loadUserByUsername(String email) throws UsernameNotFoundException {
-        return perfilRepository.findByPerfilEmail(email);
-    }
+  @Override
+  public UserDetails loadUserByUsername(String email) throws UsernameNotFoundException {
+    return perfilRepository.findByPerfilEmail(email);
+  }
 }

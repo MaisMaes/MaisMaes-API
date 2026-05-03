@@ -14,8 +14,7 @@ public record DetalheGrupoResponseDTO(
     boolean audio,
     boolean imagem,
     boolean documento,
-    List<String> bairros, 
-    List<ParticipanteGrupoResumoResponseDTO> participantes, 
+    List<String> bairros,
+    List<ParticipanteGrupoResumoResponseDTO> participantes,
     boolean usuarioLogadoEParticipante,
-    String usuarioLogadoRole
-) {}
+    String usuarioLogadoRole) {}
