@@ -1,39 +1,43 @@
-name: CI Pipeline
+spring:
+  application:
+    name: maismaes
 
-on:
-  pull_request:
-    branches: [ main ]
+  datasource:
+    url: jdbc:mysql://localhost:3306/maismaes_db
+    username: root
+    password: 12345678
+    driver-class-name: com.mysql.cj.jdbc.Driver
 
-jobs:
-  build:
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v4
+  jpa:
+    hibernate:
+      ddl-auto: update
+    show-sql: true
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.MySQL8Dialect
+        format_sql: true
 
-      - name: Setup JDK
-        uses: actions/setup-java@v4
-        with:
-          java-version: '21'
-          distribution: 'temurin'
-          cache: 'maven'
+security:
+  secret: maismaes
 
-      - name: Build
-        run: mvn clean package -Dspring.profiles.active=test
+mail:
+  host: ${MAIL_HOST:smtp.gmail.com}
+  port: ${MAIL_PORT:587}
+  username: ${MAIL_USERNAME:seu-email@gmail.com}
+  password: ${MAIL_PASSWORD:sua-senha-de-app}
+  from: ${MAIL_FROM:nao-responda@maismaes.com.br}
 
-  test:
-    runs-on: ubuntu-latest
-    needs: build
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v4
+spring.mail:
+  host: ${MAIL_HOST:smtp.gmail.com}
+  port: ${MAIL_PORT:587}
+  username: ${MAIL_USERNAME:seu-email@gmail.com}
+  password: ${MAIL_PASSWORD:sua-senha-de-app}
+  properties:
+    mail:
+      smtp:
+        auth: true
+        starttls:
+          enable: true
 
-      - name: Setup JDK
-        uses: actions/setup-java@v4
-        with:
-          java-version: '21'
-          distribution: 'temurin'
-          cache: 'maven'
-
-      - name: Run Tests
-        run: mvn test -Dspring.profiles.active=test
+recuperacao-senha:
+  expiracao-minutos: 10
