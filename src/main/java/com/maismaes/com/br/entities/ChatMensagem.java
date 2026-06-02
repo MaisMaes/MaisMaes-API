@@ -12,6 +12,7 @@ public class ChatMensagem {
 
     @Id
     private String id;
+    private Long groupId;
     private String sender;
     private String content;
     private MessageType type;

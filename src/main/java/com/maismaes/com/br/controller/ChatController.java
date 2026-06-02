@@ -5,6 +5,7 @@ import com.maismaes.com.br.repository.ChatMensagemRepository;
 import lombok.RequiredArgsConstructor;
 import org.bson.types.ObjectId;
 import org.springframework.data.mongodb.gridfs.GridFsTemplate;
+import org.springframework.messaging.handler.annotation.DestinationVariable;
 import org.springframework.messaging.handler.annotation.MessageMapping;
 import org.springframework.messaging.handler.annotation.SendTo;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -22,10 +23,11 @@ public class ChatController {
     private final ChatMensagemRepository chatMensagemRepository;
     private final GridFsTemplate gridFsTemplate;
 
-    @MessageMapping("/sendMessage")
-    @SendTo("/topic/messages")
-    public ChatMensagem enviarMensagem(ChatMensagem mensagem){
+    @MessageMapping("/sendMessage/{groupId}")
+    @SendTo("/topic/group/{groupId}")
+    public ChatMensagem enviarMensagem(@DestinationVariable Long groupId, ChatMensagem mensagem){
         mensagem.setTimestamp(LocalDateTime.now());
+        mensagem.setGroupId(groupId);
         chatMensagemRepository.save(mensagem);
         return mensagem;
     }
