@@ -8,6 +8,10 @@ spring:
     password: 12345678
     driver-class-name: com.mysql.cj.jdbc.Driver
 
+  data:
+    mongodb:
+      uri: mongodb://chatuser:chatpass@localhost:27017/chatdb
+
   jpa:
     hibernate:
       ddl-auto: update
