@@ -18,6 +18,8 @@ import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.UUID;
+
 @Slf4j
 @RequiredArgsConstructor
 @RestController
@@ -76,5 +78,16 @@ public class UsuarioController {
     usuarioService.deletaConta(perfilLogado, dto);
 
     return ResponseEntity.ok("Conta excluída com sucesso");
+  }
+
+
+  //metodo temporario para promover uma conta a adm
+  @PatchMapping("/{id}/promover-admin")
+  public ResponseEntity<Void> promoverAdmin(
+          @PathVariable UUID id) {
+
+    usuarioService.promoverAdmin(id);
+
+    return ResponseEntity.noContent().build();
   }
 }
