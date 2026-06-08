@@ -56,6 +56,8 @@ public class SecurityConfig {
                     .authenticated()
                     .requestMatchers("/chat/**")
                     .permitAll()
+                    .requestMatchers("/arquivo/**")
+                    .permitAll()
                     .anyRequest()
                     .permitAll())
         .addFilterBefore(securityFilter, UsernamePasswordAuthenticationFilter.class)
