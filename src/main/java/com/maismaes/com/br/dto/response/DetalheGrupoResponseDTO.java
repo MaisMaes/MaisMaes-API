@@ -17,4 +17,5 @@ public record DetalheGrupoResponseDTO(
     List<String> bairros,
     List<ParticipanteGrupoResumoResponseDTO> participantes,
     boolean usuarioLogadoEParticipante,
-    String usuarioLogadoRole) {}
+    String usuarioLogadoRole,
+    boolean usuarioLogadoFavoritou) {}
