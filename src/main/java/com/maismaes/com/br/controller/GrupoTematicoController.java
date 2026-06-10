@@ -1,19 +1,8 @@
 package com.maismaes.com.br.controller;
 
-import com.maismaes.com.br.dto.request.CriarGrupoTematicoRequestDTO;
-import com.maismaes.com.br.dto.request.EditarGrupoTematicoRequestDTO;
-import com.maismaes.com.br.dto.response.DetalheGrupoResponseDTO;
-import com.maismaes.com.br.dto.response.EditarGrupoTematicoResponseDTO;
-import com.maismaes.com.br.dto.response.GrupoTematicoResponseDTO;
-import com.maismaes.com.br.dto.response.ListarGrupoTematicoDTO;
-import com.maismaes.com.br.entities.Perfil;
-import com.maismaes.com.br.entities.grupo_tematico.GrupoTematico;
-import com.maismaes.com.br.service.GrupoTematicoService;
-import jakarta.validation.Valid;
 import java.util.List;
 import java.util.UUID;
-import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
+
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -27,6 +16,20 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
+
+import com.maismaes.com.br.dto.request.CriarGrupoTematicoRequestDTO;
+import com.maismaes.com.br.dto.request.EditarGrupoTematicoRequestDTO;
+import com.maismaes.com.br.dto.response.DetalheGrupoResponseDTO;
+import com.maismaes.com.br.dto.response.EditarGrupoTematicoResponseDTO;
+import com.maismaes.com.br.dto.response.GrupoTematicoResponseDTO;
+import com.maismaes.com.br.dto.response.ListarGrupoTematicoDTO;
+import com.maismaes.com.br.entities.Perfil;
+import com.maismaes.com.br.entities.grupo_tematico.GrupoTematico;
+import com.maismaes.com.br.service.GrupoTematicoService;
+
+import jakarta.validation.Valid;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
 @RequiredArgsConstructor
@@ -116,6 +119,29 @@ public class GrupoTematicoController {
   public ResponseEntity<List<ListarGrupoTematicoDTO>> meusGrupos(
       @AuthenticationPrincipal Perfil perfilLogado) {
     return ResponseEntity.ok(grupoTematicoService.listarGruposDoUsuario(perfilLogado));
+  }
+
+  // Favoritar grupo
+  @PostMapping("/{id}/favoritos")
+  public ResponseEntity<Void> favoritarGrupo(
+      @PathVariable Long id, @AuthenticationPrincipal Perfil perfilLogado) {
+    grupoTematicoService.favoritarGrupo(id, perfilLogado);
+    return ResponseEntity.ok().build();
+  }
+
+  // Remover grupo dos favoritos
+  @DeleteMapping("/{id}/favoritos")
+  public ResponseEntity<Void> removerFavoritoGrupo(
+      @PathVariable Long id, @AuthenticationPrincipal Perfil perfilLogado) {
+    grupoTematicoService.removerFavoritoGrupo(id, perfilLogado);
+    return ResponseEntity.noContent().build();
+  }
+
+  // Listar grupos favoritados pelo usuario
+  @GetMapping("/favoritos")
+  public ResponseEntity<List<ListarGrupoTematicoDTO>> listarFavoritos(
+      @AuthenticationPrincipal Perfil perfilLogado) {
+    return ResponseEntity.ok(grupoTematicoService.listarGruposFavoritos(perfilLogado));
   }
 
   // Deletar grupo
