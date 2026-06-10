@@ -6,6 +6,7 @@ import com.maismaes.com.br.dto.response.DetalheGrupoResponseDTO;
 import com.maismaes.com.br.dto.response.EditarGrupoTematicoResponseDTO;
 import com.maismaes.com.br.dto.response.GrupoTematicoResponseDTO;
 import com.maismaes.com.br.dto.response.ListarGrupoTematicoDTO;
+import com.maismaes.com.br.dto.response.MembroStatusResponseDTO;
 import com.maismaes.com.br.entities.Perfil;
 import com.maismaes.com.br.entities.grupo_tematico.GrupoTematico;
 import com.maismaes.com.br.service.GrupoTematicoService;
@@ -116,6 +117,12 @@ public class GrupoTematicoController {
   public ResponseEntity<List<ListarGrupoTematicoDTO>> meusGrupos(
       @AuthenticationPrincipal Perfil perfilLogado) {
     return ResponseEntity.ok(grupoTematicoService.listarGruposDoUsuario(perfilLogado));
+  }
+
+  @GetMapping("/{id}/sou-participante")
+  public ResponseEntity<MembroStatusResponseDTO> souParticipante(
+      @PathVariable Long id, @AuthenticationPrincipal Perfil perfilLogado) {
+    return ResponseEntity.ok(grupoTematicoService.verificarParticipacao(id, perfilLogado));
   }
 
   // Deletar grupo

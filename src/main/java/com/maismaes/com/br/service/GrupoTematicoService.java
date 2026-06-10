@@ -3,6 +3,7 @@ package com.maismaes.com.br.service;
 import com.maismaes.com.br.dto.request.EditarGrupoTematicoRequestDTO;
 import com.maismaes.com.br.dto.response.DetalheGrupoResponseDTO;
 import com.maismaes.com.br.dto.response.ListarGrupoTematicoDTO;
+import com.maismaes.com.br.dto.response.MembroStatusResponseDTO;
 import com.maismaes.com.br.dto.response.ParticipanteGrupoResumoResponseDTO;
 import com.maismaes.com.br.entities.Perfil;
 import com.maismaes.com.br.entities.Usuario;
@@ -233,6 +234,14 @@ public class GrupoTematicoService {
     } catch (Exception e) {
       throw new RuntimeException("Erro inesperado ao realizar a pesquisa");
     }
+  }
+
+  // Verificar se o usuário autenticado é participante de um grupo
+  public MembroStatusResponseDTO verificarParticipacao(Long grupoId, Perfil perfilLogado) {
+    return participanteGrupoRepository
+        .findByGrupoIdAndUsuarioId(grupoId, perfilLogado.getUsuario().getId())
+        .map(p -> new MembroStatusResponseDTO(true, p.getRole().name()))
+        .orElse(new MembroStatusResponseDTO(false, null));
   }
 
   // excluir
