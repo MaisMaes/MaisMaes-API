@@ -6,6 +6,7 @@ import com.maismaes.com.br.dto.response.DetalheGrupoResponseDTO;
 import com.maismaes.com.br.dto.response.EditarGrupoTematicoResponseDTO;
 import com.maismaes.com.br.dto.response.GrupoTematicoResponseDTO;
 import com.maismaes.com.br.dto.response.ListarGrupoTematicoDTO;
+import com.maismaes.com.br.dto.response.MembroStatusResponseDTO;
 import com.maismaes.com.br.entities.Perfil;
 import com.maismaes.com.br.entities.grupo_tematico.GrupoTematico;
 import com.maismaes.com.br.service.GrupoTematicoService;
@@ -116,6 +117,35 @@ public class GrupoTematicoController {
   public ResponseEntity<List<ListarGrupoTematicoDTO>> meusGrupos(
       @AuthenticationPrincipal Perfil perfilLogado) {
     return ResponseEntity.ok(grupoTematicoService.listarGruposDoUsuario(perfilLogado));
+  }
+
+  @GetMapping("/{id}/sou-participante")
+  public ResponseEntity<MembroStatusResponseDTO> souParticipante(
+      @PathVariable Long id, @AuthenticationPrincipal Perfil perfilLogado) {
+    return ResponseEntity.ok(grupoTematicoService.verificarParticipacao(id, perfilLogado));
+  }
+
+  // Favoritar grupo
+  @PostMapping("/{id}/favoritos")
+  public ResponseEntity<Void> favoritarGrupo(
+      @PathVariable Long id, @AuthenticationPrincipal Perfil perfilLogado) {
+    grupoTematicoService.favoritarGrupo(id, perfilLogado);
+    return ResponseEntity.ok().build();
+  }
+
+  // Remover grupo dos favoritos
+  @DeleteMapping("/{id}/favoritos")
+  public ResponseEntity<Void> removerFavoritoGrupo(
+      @PathVariable Long id, @AuthenticationPrincipal Perfil perfilLogado) {
+    grupoTematicoService.removerFavoritoGrupo(id, perfilLogado);
+    return ResponseEntity.noContent().build();
+  }
+
+  // Listar grupos favoritados pelo usuario
+  @GetMapping("/favoritos")
+  public ResponseEntity<List<ListarGrupoTematicoDTO>> listarFavoritos(
+      @AuthenticationPrincipal Perfil perfilLogado) {
+    return ResponseEntity.ok(grupoTematicoService.listarGruposFavoritos(perfilLogado));
   }
 
   // Deletar grupo

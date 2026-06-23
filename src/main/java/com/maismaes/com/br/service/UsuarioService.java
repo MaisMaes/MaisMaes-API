@@ -4,6 +4,7 @@ import com.maismaes.com.br.dto.request.AtualizaDadosContaDTO;
 import com.maismaes.com.br.dto.request.BuscaDadosContaResponseDTO;
 import com.maismaes.com.br.dto.request.DeletaContaDTO;
 import com.maismaes.com.br.entities.Perfil;
+import com.maismaes.com.br.entities.Role;
 import com.maismaes.com.br.entities.Usuario;
 import com.maismaes.com.br.exception.SenhaException;
 import com.maismaes.com.br.exception.UsuarioNaoEncontradoException;
@@ -97,5 +98,16 @@ public class UsuarioService {
 
     usuarioRepository.delete(usuario);
     perfilRepository.delete(perfilLogado);
+  }
+
+  @Transactional
+  public void promoverAdmin(UUID usuarioId) {
+
+    Usuario usuario =
+        usuarioRepository
+            .findById(usuarioId)
+            .orElseThrow(() -> new RuntimeException("Usuário não encontrado"));
+
+    usuario.getPerfil().setRole(Role.ADMINISTRADOR);
   }
 }

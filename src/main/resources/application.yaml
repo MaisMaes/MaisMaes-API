@@ -2,16 +2,26 @@ spring:
   application:
     name: maismaes
 
+  servlet:
+    multipart:
+      max-file-size: 10MB
+      max-request-size: 10MB
+
   datasource:
     url: jdbc:mysql://localhost:3306/maismaes_db
     username: root
     password: 12345678
     driver-class-name: com.mysql.cj.jdbc.Driver
 
+  data:
+    mongodb:
+      uri: mongodb://chatuser:chatpass@localhost:27017/chatdb?authSource=admin
+
+
   jpa:
     hibernate:
       ddl-auto: update
-    show-sql: true
+    show-sql: false
     properties:
       hibernate:
         dialect: org.hibernate.dialect.MySQL8Dialect
@@ -41,3 +51,12 @@ spring.mail:
 
 recuperacao-senha:
   expiracao-minutos: 10
+
+logging:
+  level:
+    org.springframework.web.socket: DEBUG
+    org.springframework.messaging: DEBUG
+    org.springframework.web.socket.messaging: DEBUG
+    com.maismaes.com.br.controller.ChatController: DEBUG
+    com.maismaes.com.br.config.WebSocketEventListener: DEBUG
+

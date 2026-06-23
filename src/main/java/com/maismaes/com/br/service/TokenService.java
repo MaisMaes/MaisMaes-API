@@ -30,6 +30,7 @@ public class TokenService {
           .withSubject(perfil.getUsername()) // email foi definido como username
           .withClaim("role", perfil.getRole().toString())
           .withClaim("id", perfil.getId().toString())
+          .withClaim("nome", perfil.getUsuario().getNome())
           .withExpiresAt(getExpirationDate())
           .sign(algorithm);
 

@@ -3,14 +3,17 @@ package com.maismaes.com.br.service;
 import com.maismaes.com.br.dto.request.EditarGrupoTematicoRequestDTO;
 import com.maismaes.com.br.dto.response.DetalheGrupoResponseDTO;
 import com.maismaes.com.br.dto.response.ListarGrupoTematicoDTO;
+import com.maismaes.com.br.dto.response.MembroStatusResponseDTO;
 import com.maismaes.com.br.dto.response.ParticipanteGrupoResumoResponseDTO;
 import com.maismaes.com.br.entities.Perfil;
 import com.maismaes.com.br.entities.Usuario;
 import com.maismaes.com.br.entities.grupo_tematico.Bairro;
 import com.maismaes.com.br.entities.grupo_tematico.Categoria;
+import com.maismaes.com.br.entities.grupo_tematico.FavoritoGrupo;
 import com.maismaes.com.br.entities.grupo_tematico.GrupoRole;
 import com.maismaes.com.br.entities.grupo_tematico.GrupoTematico;
 import com.maismaes.com.br.entities.grupo_tematico.ParticipanteGrupo;
+import com.maismaes.com.br.repository.FavoritoGrupoRepository;
 import com.maismaes.com.br.repository.GrupoTematicoRepository;
 import com.maismaes.com.br.repository.ParticipanteGrupoRepository;
 import jakarta.transaction.Transactional;
@@ -28,6 +31,7 @@ public class GrupoTematicoService {
 
   private final GrupoTematicoRepository grupoTematicoRepository;
   private final ParticipanteGrupoRepository participanteGrupoRepository;
+  private final FavoritoGrupoRepository favoritoGrupoRepository;
 
   @Transactional
   public GrupoTematico criarGrupoTematico(
@@ -146,6 +150,45 @@ public class GrupoTematicoService {
         .toList();
   }
 
+  @Transactional
+  public void favoritarGrupo(Long grupoId, Perfil perfilLogado) {
+    Usuario usuario = perfilLogado.getUsuario();
+
+    if (favoritoGrupoRepository.existsByGrupoIdAndUsuarioId(grupoId, usuario.getId())) {
+      return;
+    }
+
+    GrupoTematico grupo =
+        grupoTematicoRepository
+            .findById(grupoId)
+            .orElseThrow(() -> new RuntimeException("Grupo nao encontrado."));
+
+    FavoritoGrupo favorito =
+        FavoritoGrupo.builder()
+            .grupo(grupo)
+            .usuario(usuario)
+            .dataFavorito(LocalDateTime.now())
+            .build();
+
+    favoritoGrupoRepository.save(favorito);
+  }
+
+  @Transactional
+  public void removerFavoritoGrupo(Long grupoId, Perfil perfilLogado) {
+    if (!grupoTematicoRepository.existsById(grupoId)) {
+      throw new RuntimeException("Grupo nao encontrado.");
+    }
+
+    favoritoGrupoRepository.deleteByGrupoIdAndUsuarioId(grupoId, perfilLogado.getUsuario().getId());
+  }
+
+  public List<ListarGrupoTematicoDTO> listarGruposFavoritos(Perfil perfilLogado) {
+    return favoritoGrupoRepository.findByUsuarioId(perfilLogado.getUsuario().getId()).stream()
+        .map(FavoritoGrupo::getGrupo)
+        .map(ListarGrupoTematicoDTO::new)
+        .toList();
+  }
+
   public List<ListarGrupoTematicoDTO> listarTodos() {
     return grupoTematicoRepository.findAll().stream().map(ListarGrupoTematicoDTO::new).toList();
   }
@@ -178,6 +221,9 @@ public class GrupoTematicoService {
 
     String roleLogada = participanteLogado.map(p -> p.getRole().name()).orElse(null);
 
+    boolean usuarioLogadoFavoritou =
+        favoritoGrupoRepository.existsByGrupoIdAndUsuarioId(grupoId, usuarioLogadoId);
+
     return new DetalheGrupoResponseDTO(
         grupo.getId(),
         grupo.getTitulo(),
@@ -193,7 +239,8 @@ public class GrupoTematicoService {
         nomesBairros,
         participantes,
         isParticipante,
-        roleLogada);
+        roleLogada,
+        usuarioLogadoFavoritou);
   }
 
   // Pesquisa global sem filtros
@@ -233,6 +280,14 @@ public class GrupoTematicoService {
     } catch (Exception e) {
       throw new RuntimeException("Erro inesperado ao realizar a pesquisa");
     }
+  }
+
+  // Verificar se o usuário autenticado é participante de um grupo
+  public MembroStatusResponseDTO verificarParticipacao(Long grupoId, Perfil perfilLogado) {
+    return participanteGrupoRepository
+        .findByGrupoIdAndUsuarioId(grupoId, perfilLogado.getUsuario().getId())
+        .map(p -> new MembroStatusResponseDTO(true, p.getRole().name()))
+        .orElse(new MembroStatusResponseDTO(false, null));
   }
 
   // excluir
