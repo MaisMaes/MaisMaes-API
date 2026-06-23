@@ -4,6 +4,7 @@ import static org.junit.jupiter.api.Assertions.*;
 
 import com.maismaes.com.br.entities.Perfil;
 import com.maismaes.com.br.entities.Role;
+import com.maismaes.com.br.entities.Usuario;
 import java.util.UUID;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
@@ -24,12 +25,15 @@ class TokenServiceTest {
     void deveGerarTokenValidoEValidarRetornandoSubject() {
       ReflectionTestUtils.setField(tokenService, "secret", "segredo-teste-123");
 
+      Usuario usuario = Usuario.builder().nome("Maria").build();
+
       Perfil perfil =
           Perfil.builder()
               .id(UUID.fromString("00000000-0000-0000-0000-000000000010"))
               .perfilEmail("mae@example.com")
               .senha("senha")
               .role(Role.MAE_SOLO)
+              .usuario(usuario)
               .build();
 
       String token = tokenService.generateToken(perfil);
