@@ -1,13 +1,5 @@
 package com.maismaes.com.br.service;
 
-import java.time.LocalDateTime;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
-import java.util.UUID;
-
-import org.springframework.stereotype.Service;
-
 import com.maismaes.com.br.dto.request.EditarGrupoTematicoRequestDTO;
 import com.maismaes.com.br.dto.response.DetalheGrupoResponseDTO;
 import com.maismaes.com.br.dto.response.ListarGrupoTematicoDTO;
@@ -24,9 +16,14 @@ import com.maismaes.com.br.entities.grupo_tematico.ParticipanteGrupo;
 import com.maismaes.com.br.repository.FavoritoGrupoRepository;
 import com.maismaes.com.br.repository.GrupoTematicoRepository;
 import com.maismaes.com.br.repository.ParticipanteGrupoRepository;
-
 import jakarta.transaction.Transactional;
+import java.time.LocalDateTime;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
+import java.util.UUID;
 import lombok.RequiredArgsConstructor;
+import org.springframework.stereotype.Service;
 
 @RequiredArgsConstructor
 @Service

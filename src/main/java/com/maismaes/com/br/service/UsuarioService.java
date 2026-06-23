@@ -100,11 +100,12 @@ public class UsuarioService {
     perfilRepository.delete(perfilLogado);
   }
 
-
   @Transactional
   public void promoverAdmin(UUID usuarioId) {
 
-    Usuario usuario = usuarioRepository.findById(usuarioId)
+    Usuario usuario =
+        usuarioRepository
+            .findById(usuarioId)
             .orElseThrow(() -> new RuntimeException("Usuário não encontrado"));
 
     usuario.getPerfil().setRole(Role.ADMINISTRADOR);

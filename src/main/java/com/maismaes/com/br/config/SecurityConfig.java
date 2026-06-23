@@ -1,8 +1,9 @@
 package com.maismaes.com.br.config;
 
+import com.maismaes.com.br.infra.security.SecurityFilter;
 import java.util.Arrays;
 import java.util.List;
-
+import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.authentication.AuthenticationManager;
@@ -17,10 +18,6 @@ import org.springframework.security.web.authentication.UsernamePasswordAuthentic
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
-
-import com.maismaes.com.br.infra.security.SecurityFilter;
-
-import lombok.RequiredArgsConstructor;
 
 @RequiredArgsConstructor
 @Configuration
@@ -76,9 +73,11 @@ public class SecurityConfig {
         Arrays.asList(
             "http://localhost:8082",
             "http://localhost:8081",
+            "http://localhost:5173",
             "http://10.187.133.135:8081",
             "http://192.168.1.100:8081",
             "http://192.168.137.194:8081",
+            "http://192.168.1.11:8081",
             "http://192.168.1.11:8081"));
     corsConfiguration.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "PATCH"));
     corsConfiguration.setAllowedHeaders(List.of("Authorization", "Content-Type"));

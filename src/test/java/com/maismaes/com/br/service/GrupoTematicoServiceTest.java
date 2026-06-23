@@ -50,8 +50,7 @@ class GrupoTematicoServiceTest {
     Perfil perfil = criarPerfilComUsuario(UUID.randomUUID());
     GrupoTematico grupo = criarGrupo(grupoId);
 
-    when(favoritoGrupoRepository.existsByGrupoIdAndUsuarioId(
-            grupoId, perfil.getUsuario().getId()))
+    when(favoritoGrupoRepository.existsByGrupoIdAndUsuarioId(grupoId, perfil.getUsuario().getId()))
         .thenReturn(false);
     when(grupoTematicoRepository.findById(grupoId)).thenReturn(Optional.of(grupo));
 
@@ -71,8 +70,7 @@ class GrupoTematicoServiceTest {
     Long grupoId = 1L;
     Perfil perfil = criarPerfilComUsuario(UUID.randomUUID());
 
-    when(favoritoGrupoRepository.existsByGrupoIdAndUsuarioId(
-            grupoId, perfil.getUsuario().getId()))
+    when(favoritoGrupoRepository.existsByGrupoIdAndUsuarioId(grupoId, perfil.getUsuario().getId()))
         .thenReturn(true);
 
     grupoTematicoService.favoritarGrupo(grupoId, perfil);
@@ -90,8 +88,8 @@ class GrupoTematicoServiceTest {
 
     grupoTematicoService.removerFavoritoGrupo(grupoId, perfil);
 
-    verify(favoritoGrupoRepository).deleteByGrupoIdAndUsuarioId(
-        grupoId, perfil.getUsuario().getId());
+    verify(favoritoGrupoRepository)
+        .deleteByGrupoIdAndUsuarioId(grupoId, perfil.getUsuario().getId());
   }
 
   @Test

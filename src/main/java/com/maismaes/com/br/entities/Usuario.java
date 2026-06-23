@@ -1,7 +1,6 @@
 package com.maismaes.com.br.entities;
 
 import jakarta.persistence.*;
-
 import java.util.HashSet;
 import java.util.Set;
 import java.util.UUID;
@@ -34,11 +33,8 @@ public class Usuario {
 
   @ManyToMany
   @JoinTable(
-          name = "usuario_infocard_favorito",
-          joinColumns = @JoinColumn(name = "usuario_id"),
-          inverseJoinColumns = @JoinColumn(name = "infocard_id")
-  )
+      name = "usuario_infocard_favorito",
+      joinColumns = @JoinColumn(name = "usuario_id"),
+      inverseJoinColumns = @JoinColumn(name = "infocard_id"))
   private Set<Infocard> favoritos = new HashSet<>();
-
-
 }

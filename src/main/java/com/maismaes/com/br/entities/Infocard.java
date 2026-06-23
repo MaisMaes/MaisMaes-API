@@ -1,13 +1,11 @@
 package com.maismaes.com.br.entities;
 
-
 import jakarta.persistence.*;
+import java.time.LocalDateTime;
+import java.util.UUID;
 import lombok.*;
 import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
-
-import java.time.LocalDateTime;
-import java.util.UUID;
 
 @EqualsAndHashCode(of = "id")
 @NoArgsConstructor
@@ -19,33 +17,31 @@ import java.util.UUID;
 @Table(name = "infocards")
 public class Infocard {
 
-    @Id
-    @GeneratedValue(strategy = GenerationType.UUID)
-    private UUID id;
+  @Id
+  @GeneratedValue(strategy = GenerationType.UUID)
+  private UUID id;
 
-    @Column(nullable = false)
-    private String titulo;
+  @Column(nullable = false)
+  private String titulo;
 
-    @Column(nullable = false, length = 1000)
-    private String descricao;
+  @Column(nullable = false, length = 1000)
+  private String descricao;
 
-    private String imagem;
+  private String imagem;
 
-    private String link;
+  private String link;
 
-    @Column(nullable = false)
-    private boolean destaque;
+  @Column(nullable = false)
+  private boolean destaque;
 
-    @Column(nullable = false)
-    private boolean ativo = true;
+  @Column(nullable = false)
+  private boolean ativo = true;
 
-    @CreationTimestamp
-    private LocalDateTime dataCriacao;
+  @CreationTimestamp private LocalDateTime dataCriacao;
 
-    @UpdateTimestamp
-    private LocalDateTime dataAtualizacao;
+  @UpdateTimestamp private LocalDateTime dataAtualizacao;
 
-    @ManyToOne
-    @JoinColumn(name = "criador_id", nullable = false)
-    private Usuario criador;
+  @ManyToOne
+  @JoinColumn(name = "criador_id", nullable = false)
+  private Usuario criador;
 }
