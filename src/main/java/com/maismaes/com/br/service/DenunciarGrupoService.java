@@ -2,7 +2,9 @@ package com.maismaes.com.br.service;
 
 import org.springframework.stereotype.Service;
 
-@RequiresArgsConstructor
+import lombok.RequiredArgsConstructor;
+
+@RequiredArgsConstructor
 @Service
 public class DenunciarGrupoService {
 
