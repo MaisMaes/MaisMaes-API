@@ -7,7 +7,8 @@ import java.util.UUID;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 
-public interface DenunciarGrupoRepository extends JpaRepository<DenunciarGrupo, Long>, JpaSpecificationExecutor<DenunciarGrupo> {
+public interface DenunciarGrupoRepository
+    extends JpaRepository<DenunciarGrupo, Long>, JpaSpecificationExecutor<DenunciarGrupo> {
 
   // Busca todas as denúncias de um grupo
   List<DenunciarGrupo> findByGrupoId(Long grupo);

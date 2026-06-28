@@ -1,14 +1,13 @@
 package com.maismaes.com.br.service;
 
 import jakarta.annotation.PostConstruct;
+import java.util.Map;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.MediaType;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestClient;
-
-import java.util.Map;
 
 @Slf4j
 @Service
@@ -22,26 +21,33 @@ public class EmailService {
 
   @PostConstruct
   public void init() {
-      this.restClient = RestClient.create(URL_API_MENSAGENS);
+    this.restClient = RestClient.create(URL_API_MENSAGENS);
   }
 
   @Value("${mail.from:nao-responda@maismaes.com.br}")
   private String from;
 
   public boolean enviarCodigoRecuperacao(String destinatario, String codigo) {
-      log.info("[REQUISIÇÃO][EmailService] - Solicitando envio de código de recuperação de senha para API mensagens");
-        try {
-            restClient.post()
-                    .uri("/recuperar-senha")
-                    .contentType(MediaType.APPLICATION_JSON)
-                    .body(Map.of("email", destinatario, "codigo", codigo))
-                    .retrieve()
-                    .toBodilessEntity();
-            log.info("[REQUISIÇÃO][EmailService] - Código de recuperação de senha enviado com sucesso para: {}", destinatario);
-            return true;
-        }catch (Exception ex){
-            log.info("[REQUISIÇÃO][EmailService] - Falha ao enviar código de recuperação de senha para: {}", destinatario, ex);
-            return false;
-        }
+    log.info(
+        "[REQUISIÇÃO][EmailService] - Solicitando envio de código de recuperação de senha para API mensagens");
+    try {
+      restClient
+          .post()
+          .uri("/recuperar-senha")
+          .contentType(MediaType.APPLICATION_JSON)
+          .body(Map.of("email", destinatario, "codigo", codigo))
+          .retrieve()
+          .toBodilessEntity();
+      log.info(
+          "[REQUISIÇÃO][EmailService] - Código de recuperação de senha enviado com sucesso para: {}",
+          destinatario);
+      return true;
+    } catch (Exception ex) {
+      log.info(
+          "[REQUISIÇÃO][EmailService] - Falha ao enviar código de recuperação de senha para: {}",
+          destinatario,
+          ex);
+      return false;
+    }
   }
 }

@@ -11,16 +11,12 @@ import com.maismaes.com.br.entities.grupo_tematico.DenunciarGrupo;
 import com.maismaes.com.br.entities.grupo_tematico.GrupoTematico;
 import com.maismaes.com.br.service.GrupoTematicoService;
 import io.swagger.v3.oas.annotations.Operation;
-import io.swagger.v3.oas.annotations.responses.ApiResponse;
-import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import jakarta.validation.Valid;
 import java.util.List;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
-import org.springframework.data.domain.Pageable;
-import org.springframework.data.web.PageableDefault;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -170,43 +166,35 @@ public class GrupoTematicoController {
   @Operation(summary = "Banir participante de um grupo")
   @PatchMapping("/{grupoId}/banir")
   public ResponseEntity<Void> banirParticipante(
-          @PathVariable Long grupoId,
-          @RequestBody @Valid BanirParticipanteRequestDTO dto,
-          @AuthenticationPrincipal Perfil perfilLogado) {
+      @PathVariable Long grupoId,
+      @RequestBody @Valid BanirParticipanteRequestDTO dto,
+      @AuthenticationPrincipal Perfil perfilLogado) {
 
-    grupoTematicoService.banirParticipante(
-            grupoId,
-            dto.usuarioId(),
-            dto.motivo(),
-            perfilLogado);
+    grupoTematicoService.banirParticipante(grupoId, dto.usuarioId(), dto.motivo(), perfilLogado);
 
     return ResponseEntity.noContent().build();
   }
 
-
   @Operation(summary = "Buscar Denuncias, aceita filtros")
   @GetMapping
   public ResponseEntity<Page<DenunciaGrupoResponseDTO>> buscarDenuncias(
-          DenunciaGrupoFilterDTO filtro,
-          @RequestParam(defaultValue = "0") int pagina,
-          @RequestParam(defaultValue = "10") int tamanho) {
+      DenunciaGrupoFilterDTO filtro,
+      @RequestParam(defaultValue = "0") int pagina,
+      @RequestParam(defaultValue = "10") int tamanho) {
 
-    Page<DenunciaGrupoResponseDTO> paginaResultado = grupoTematicoService.listarDenuncias(filtro, pagina, tamanho);
+    Page<DenunciaGrupoResponseDTO> paginaResultado =
+        grupoTematicoService.listarDenuncias(filtro, pagina, tamanho);
     return ResponseEntity.ok(paginaResultado);
   }
 
   @Operation(summary = "Atualiza campos específicos de uma denúncia (PATCH)")
   @PatchMapping("/{id}")
   public ResponseEntity<DenunciaGrupoResponseDTO> atualizarDenuncia(
-          @PathVariable Long id,
-          @RequestBody AtualizarDenunciaDTO dto) {
+      @PathVariable Long id, @RequestBody AtualizarDenunciaDTO dto) {
 
     DenunciarGrupo denunciaAtualizada = grupoTematicoService.atualizarParcial(id, dto);
 
     // Retorna o DTO de resposta limpo que criamos na etapa anterior
     return ResponseEntity.ok(new DenunciaGrupoResponseDTO(denunciaAtualizada));
   }
-
-
-
 }

@@ -19,7 +19,6 @@ import com.maismaes.com.br.utils.DenunciarGrupoSpecification;
 import jakarta.transaction.Transactional;
 import java.time.LocalDateTime;
 import java.util.*;
-
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -125,19 +124,18 @@ public class GrupoTematicoService {
 
     Usuario usuario = perfilLogado.getUsuario();
 
-//    if (participanteGrupoRepository.existsByGrupoIdAndUsuarioId(grupoId, usuario.getId())) {
-//      throw new RuntimeException("Você já é participante deste grupo.");
-//    }
+    //    if (participanteGrupoRepository.existsByGrupoIdAndUsuarioId(grupoId, usuario.getId())) {
+    //      throw new RuntimeException("Você já é participante deste grupo.");
+    //    }
 
     Optional<ParticipanteGrupo> participante =
-            participanteGrupoRepository.findByGrupoIdAndUsuarioId(grupoId, usuario.getId());
+        participanteGrupoRepository.findByGrupoIdAndUsuarioId(grupoId, usuario.getId());
     String motivo = participante.get().getMotivoBanimento();
 
     if (participante.isPresent()) {
 
       if (motivo != null && !motivo.isBlank()) {
-        throw new RuntimeException(
-                "Você foi banido deste grupo. Motivo: " + motivo);
+        throw new RuntimeException("Você foi banido deste grupo. Motivo: " + motivo);
       }
 
       throw new RuntimeException("Você foi banido deste grupo. " + motivo);
@@ -356,39 +354,29 @@ public class GrupoTematicoService {
             .usuario(usuario)
             .status(StatusDenuncia.PENDENTE) // ou ABERTO, conforme sua regra
             .descricao(descricao)
-                .verdadeira(ConsistenciaDenuncia.VERIFICANDO)
+            .verdadeira(ConsistenciaDenuncia.VERIFICANDO)
             .build();
 
     denunciarGrupoRepository.save(denuncia);
   }
 
-
-
-
   @Transactional
-  public void banirParticipante(Long grupoId, UUID usuarioBanidoId, String motivo, Perfil perfilLogado) {
-
-
-
+  public void banirParticipante(
+      Long grupoId, UUID usuarioBanidoId, String motivo, Perfil perfilLogado) {
 
     ParticipanteGrupo executor =
-            participanteGrupoRepository
-                    .findByGrupoIdAndUsuarioId(grupoId, perfilLogado.getUsuario().getId())
-                    .orElseThrow(() ->
-                            new RuntimeException("Você não participa deste grupo."));
-
+        participanteGrupoRepository
+            .findByGrupoIdAndUsuarioId(grupoId, perfilLogado.getUsuario().getId())
+            .orElseThrow(() -> new RuntimeException("Você não participa deste grupo."));
 
     if (executor.getRole() != GrupoRole.CRIADORA) {
       throw new RuntimeException("Apenas a criadora pode banir participantes.");
     }
 
-
     ParticipanteGrupo participante =
-            participanteGrupoRepository
-                    .findByGrupoIdAndUsuarioId(grupoId, usuarioBanidoId)
-                    .orElseThrow(() ->
-                            new RuntimeException("Participante não encontrado."));
-
+        participanteGrupoRepository
+            .findByGrupoIdAndUsuarioId(grupoId, usuarioBanidoId)
+            .orElseThrow(() -> new RuntimeException("Participante não encontrado."));
 
     if (participante.getRole() == GrupoRole.CRIADORA) {
       throw new RuntimeException("A criadora não pode ser banida.");
@@ -399,7 +387,8 @@ public class GrupoTematicoService {
     participanteGrupoRepository.save(participante);
   }
 
-  public Page<DenunciaGrupoResponseDTO> listarDenuncias(DenunciaGrupoFilterDTO filtro, int pagina, int tamanho) {
+  public Page<DenunciaGrupoResponseDTO> listarDenuncias(
+      DenunciaGrupoFilterDTO filtro, int pagina, int tamanho) {
     Pageable pageable = PageRequest.of(pagina, tamanho, Sort.by("id").descending());
 
     Specification<DenunciarGrupo> spec = DenunciarGrupoSpecification.filtrar(filtro);
@@ -413,9 +402,10 @@ public class GrupoTematicoService {
   @Transactional
   public DenunciarGrupo atualizarParcial(Long id, AtualizarDenunciaDTO dto) {
 
-    DenunciarGrupo denuncia = denunciarGrupoRepository.findById(id)
+    DenunciarGrupo denuncia =
+        denunciarGrupoRepository
+            .findById(id)
             .orElseThrow(() -> new RuntimeException("Denúncia não encontrada com o ID: " + id));
-
 
     if (dto.status() != null && !dto.status().isBlank()) {
       try {
@@ -426,7 +416,6 @@ public class GrupoTematicoService {
       }
     }
 
-
     if (dto.descricao() != null && !dto.descricao().isBlank()) {
       denuncia.setDescricao(dto.descricao());
     }
@@ -434,7 +423,8 @@ public class GrupoTematicoService {
     if (dto.verdadeira() != null && !dto.verdadeira().isBlank()) {
       try {
 
-        ConsistenciaDenuncia consistencia = ConsistenciaDenuncia.valueOf(dto.verdadeira().trim().toUpperCase());
+        ConsistenciaDenuncia consistencia =
+            ConsistenciaDenuncia.valueOf(dto.verdadeira().trim().toUpperCase());
         denuncia.setVerdadeira(consistencia);
       } catch (IllegalArgumentException e) {
 
@@ -443,6 +433,4 @@ public class GrupoTematicoService {
 
     return denunciarGrupoRepository.save(denuncia);
   }
-
-
 }

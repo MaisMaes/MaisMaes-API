@@ -50,10 +50,15 @@ public class AuthController {
       @RequestBody @Valid RecuperarSenhaRequestDTO request) {
     boolean sucessoEnvioCodigo = recuperacaoSenhaService.solicitarRecuperacao(request.email());
     if (sucessoEnvioCodigo) {
-        return ResponseEntity.status(HttpStatus.OK).body(Map.of("mensagem", "Código de recuperação enviado, " +
-                "cheque sua caixa de entrada"));
+      return ResponseEntity.status(HttpStatus.OK)
+          .body(
+              Map.of(
+                  "mensagem", "Código de recuperação enviado, " + "cheque sua caixa de entrada"));
     } else {
-        return ResponseEntity.status(HttpStatus.SERVICE_UNAVAILABLE).body(Map.of("mensagem", "Falha ao enviar código de recuperação, tente novamente mais tarde"));
+      return ResponseEntity.status(HttpStatus.SERVICE_UNAVAILABLE)
+          .body(
+              Map.of(
+                  "mensagem", "Falha ao enviar código de recuperação, tente novamente mais tarde"));
     }
   }
 
