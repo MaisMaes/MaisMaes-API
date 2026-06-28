@@ -1,36 +1,47 @@
 package com.maismaes.com.br.service;
 
+import jakarta.annotation.PostConstruct;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.mail.SimpleMailMessage;
-import org.springframework.mail.javamail.JavaMailSender;
-import org.springframework.scheduling.annotation.Async;
+import org.springframework.http.MediaType;
 import org.springframework.stereotype.Service;
+import org.springframework.web.client.RestClient;
 
+import java.util.Map;
+
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class EmailService {
 
-  private final JavaMailSender mailSender;
+  @Value("${mail.api.url:http://localhost:8080/api/mensagens}")
+  private String URL_API_MENSAGENS;
+
+  private RestClient restClient;
+
+  @PostConstruct
+  public void init() {
+      this.restClient = RestClient.create(URL_API_MENSAGENS);
+  }
 
   @Value("${mail.from:nao-responda@maismaes.com.br}")
   private String from;
 
-  @Async
-  public void enviarCodigoRecuperacao(String destinatario, String codigo) {
-    SimpleMailMessage message = new SimpleMailMessage();
-    message.setFrom(from);
-    message.setTo(destinatario);
-    message.setSubject("Mais Mães - Código de recuperação de senha");
-    message.setText(
-        "Olá!\n\n"
-            + "Recebemos uma solicitação para redefinir a sua senha.\n"
-            + "Use o código abaixo para concluir o processo:\n\n"
-            + "    "
-            + codigo
-            + "\n\n"
-            + "Este código expira em alguns minutos. Caso não tenha solicitado, ignore esta mensagem.\n\n"
-            + "Equipe Mais Mães.");
-    mailSender.send(message);
+  public boolean enviarCodigoRecuperacao(String destinatario, String codigo) {
+      log.info("[REQUISIÇÃO][EmailService] - Solicitando envio de código de recuperação de senha para API mensagens");
+        try {
+            restClient.post()
+                    .uri("/recuperar-senha")
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .body(Map.of("email", destinatario, "codigo", codigo))
+                    .retrieve()
+                    .toBodilessEntity();
+            log.info("[REQUISIÇÃO][EmailService] - Código de recuperação de senha enviado com sucesso para: {}", destinatario);
+            return true;
+        }catch (Exception ex){
+            log.info("[REQUISIÇÃO][EmailService] - Falha ao enviar código de recuperação de senha para: {}", destinatario, ex);
+            return false;
+        }
   }
 }

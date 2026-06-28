@@ -46,9 +46,6 @@ public class UsuarioController {
     var novoUsuario =
         usuarioService.cadastrarUsuario(cadastroUsuarioRequestDTO.toUsuarioEntity(senhaEncriptada));
 
-
-
-
     var token = tokenService.generateToken(novoUsuario.getPerfil());
     var response = new CadastroUsuarioResponseDTO(token);
 

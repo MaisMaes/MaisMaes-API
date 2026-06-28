@@ -8,6 +8,8 @@ import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
+
+import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
@@ -29,11 +31,10 @@ public class RecuperacaoSenhaService {
 
   private final Map<String, CodigoRecuperacao> codigos = new ConcurrentHashMap<>();
 
-  public void solicitarRecuperacao(String email) {
+  public boolean solicitarRecuperacao(String email) {
     Perfil perfil = perfilRepository.findByPerfilEmail(email);
-    // Por segurança, não revelamos se o e-mail existe ou não.
     if (perfil == null) {
-      return;
+      throw new EntityNotFoundException("Perfil não encontrado para o e-mail: " + email);
     }
 
     codigos.values().removeIf(reg -> reg.email().equalsIgnoreCase(email));
@@ -42,7 +43,7 @@ public class RecuperacaoSenhaService {
     Instant expiraEm = Instant.now().plus(expiracaoMinutos, ChronoUnit.MINUTES);
     codigos.put(codigo, new CodigoRecuperacao(email, expiraEm));
 
-    emailService.enviarCodigoRecuperacao(email, codigo);
+    return emailService.enviarCodigoRecuperacao(email, codigo);
   }
 
   public void redefinirSenha(String codigo, String novaSenha) {
