@@ -21,6 +21,7 @@ public class Usuario {
 
   private String nome;
 
+
   @Column(unique = true, nullable = false)
   private String email;
 
@@ -30,6 +31,7 @@ public class Usuario {
   @OneToOne(fetch = FetchType.LAZY, optional = false, cascade = CascadeType.PERSIST)
   @JoinColumn(name = "perfil_id", nullable = false, unique = true)
   private Perfil perfil;
+
 
   @ManyToMany
   @JoinTable(

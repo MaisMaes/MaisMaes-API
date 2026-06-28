@@ -51,4 +51,12 @@ public class ParticipanteGrupo {
   @Column(nullable = false)
   @Builder.Default // precisa disso para não sobrescrever o valor padrão
   private GrupoRole role = GrupoRole.PARTICIPANTE;
+
+
+  @Column(name = "motivo_banimento", length = 80)
+  private String motivoBanimento;
+
+  @Column(nullable = false)
+  @Builder.Default
+  private boolean ativo = true;
 }

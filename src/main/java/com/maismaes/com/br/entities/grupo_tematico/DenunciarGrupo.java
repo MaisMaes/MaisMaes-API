@@ -59,4 +59,10 @@ public class DenunciarGrupo {
   @UpdateTimestamp
   @Column(name = "atualizado_em", nullable = false)
   private LocalDateTime atualizadoEm;
+
+
+  @Enumerated(EnumType.STRING)
+  @Column(name = "verdadeira", length = 20)
+  private ConsistenciaDenuncia verdadeira = ConsistenciaDenuncia.VERIFICANDO;
+
 }

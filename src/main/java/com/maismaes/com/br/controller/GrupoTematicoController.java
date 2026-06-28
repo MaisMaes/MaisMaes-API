@@ -1,34 +1,30 @@
 package com.maismaes.com.br.controller;
 
-import com.maismaes.com.br.dto.request.CriarDenunciaGrupoRequestDTO;
-import com.maismaes.com.br.dto.request.CriarGrupoTematicoRequestDTO;
-import com.maismaes.com.br.dto.request.EditarGrupoTematicoRequestDTO;
+import com.maismaes.com.br.dto.request.*;
 import com.maismaes.com.br.dto.response.DetalheGrupoResponseDTO;
 import com.maismaes.com.br.dto.response.EditarGrupoTematicoResponseDTO;
 import com.maismaes.com.br.dto.response.GrupoTematicoResponseDTO;
 import com.maismaes.com.br.dto.response.ListarGrupoTematicoDTO;
 import com.maismaes.com.br.dto.response.MembroStatusResponseDTO;
 import com.maismaes.com.br.entities.Perfil;
+import com.maismaes.com.br.entities.grupo_tematico.DenunciarGrupo;
 import com.maismaes.com.br.entities.grupo_tematico.GrupoTematico;
 import com.maismaes.com.br.service.GrupoTematicoService;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import jakarta.validation.Valid;
 import java.util.List;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.web.PageableDefault;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
-import org.springframework.web.bind.annotation.CrossOrigin;
-import org.springframework.web.bind.annotation.DeleteMapping;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.PutMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 @Slf4j
 @RequiredArgsConstructor
@@ -170,4 +166,47 @@ public class GrupoTematicoController {
 
     return ResponseEntity.status(HttpStatus.CREATED).body("Denúncia registrada com sucesso!");
   }
+
+  @Operation(summary = "Banir participante de um grupo")
+  @PatchMapping("/{grupoId}/banir")
+  public ResponseEntity<Void> banirParticipante(
+          @PathVariable Long grupoId,
+          @RequestBody @Valid BanirParticipanteRequestDTO dto,
+          @AuthenticationPrincipal Perfil perfilLogado) {
+
+    grupoTematicoService.banirParticipante(
+            grupoId,
+            dto.usuarioId(),
+            dto.motivo(),
+            perfilLogado);
+
+    return ResponseEntity.noContent().build();
+  }
+
+
+  @Operation(summary = "Buscar Denuncias, aceita filtros")
+  @GetMapping
+  public ResponseEntity<Page<DenunciaGrupoResponseDTO>> buscarDenuncias(
+          DenunciaGrupoFilterDTO filtro,
+          @RequestParam(defaultValue = "0") int pagina,
+          @RequestParam(defaultValue = "10") int tamanho) {
+
+    Page<DenunciaGrupoResponseDTO> paginaResultado = grupoTematicoService.listarDenuncias(filtro, pagina, tamanho);
+    return ResponseEntity.ok(paginaResultado);
+  }
+
+  @Operation(summary = "Atualiza campos específicos de uma denúncia (PATCH)")
+  @PatchMapping("/{id}")
+  public ResponseEntity<DenunciaGrupoResponseDTO> atualizarDenuncia(
+          @PathVariable Long id,
+          @RequestBody AtualizarDenunciaDTO dto) {
+
+    DenunciarGrupo denunciaAtualizada = grupoTematicoService.atualizarParcial(id, dto);
+
+    // Retorna o DTO de resposta limpo que criamos na etapa anterior
+    return ResponseEntity.ok(new DenunciaGrupoResponseDTO(denunciaAtualizada));
+  }
+
+
+
 }

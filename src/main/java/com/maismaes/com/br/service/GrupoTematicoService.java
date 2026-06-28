@@ -1,5 +1,8 @@
 package com.maismaes.com.br.service;
 
+import com.maismaes.com.br.dto.request.AtualizarDenunciaDTO;
+import com.maismaes.com.br.dto.request.DenunciaGrupoFilterDTO;
+import com.maismaes.com.br.dto.request.DenunciaGrupoResponseDTO;
 import com.maismaes.com.br.dto.request.EditarGrupoTematicoRequestDTO;
 import com.maismaes.com.br.dto.response.DetalheGrupoResponseDTO;
 import com.maismaes.com.br.dto.response.ListarGrupoTematicoDTO;
@@ -7,25 +10,22 @@ import com.maismaes.com.br.dto.response.MembroStatusResponseDTO;
 import com.maismaes.com.br.dto.response.ParticipanteGrupoResumoResponseDTO;
 import com.maismaes.com.br.entities.Perfil;
 import com.maismaes.com.br.entities.Usuario;
-import com.maismaes.com.br.entities.grupo_tematico.Bairro;
-import com.maismaes.com.br.entities.grupo_tematico.Categoria;
-import com.maismaes.com.br.entities.grupo_tematico.DenunciarGrupo;
-import com.maismaes.com.br.entities.grupo_tematico.FavoritoGrupo;
-import com.maismaes.com.br.entities.grupo_tematico.GrupoRole;
-import com.maismaes.com.br.entities.grupo_tematico.GrupoTematico;
-import com.maismaes.com.br.entities.grupo_tematico.ParticipanteGrupo;
-import com.maismaes.com.br.entities.grupo_tematico.StatusDenuncia;
+import com.maismaes.com.br.entities.grupo_tematico.*;
 import com.maismaes.com.br.repository.DenunciarGrupoRepository;
 import com.maismaes.com.br.repository.FavoritoGrupoRepository;
 import com.maismaes.com.br.repository.GrupoTematicoRepository;
 import com.maismaes.com.br.repository.ParticipanteGrupoRepository;
+import com.maismaes.com.br.utils.DenunciarGrupoSpecification;
 import jakarta.transaction.Transactional;
 import java.time.LocalDateTime;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
-import java.util.UUID;
+import java.util.*;
+
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 
 @RequiredArgsConstructor
@@ -125,8 +125,22 @@ public class GrupoTematicoService {
 
     Usuario usuario = perfilLogado.getUsuario();
 
-    if (participanteGrupoRepository.existsByGrupoIdAndUsuarioId(grupoId, usuario.getId())) {
-      throw new RuntimeException("Você já é participante deste grupo.");
+//    if (participanteGrupoRepository.existsByGrupoIdAndUsuarioId(grupoId, usuario.getId())) {
+//      throw new RuntimeException("Você já é participante deste grupo.");
+//    }
+
+    Optional<ParticipanteGrupo> participante =
+            participanteGrupoRepository.findByGrupoIdAndUsuarioId(grupoId, usuario.getId());
+    String motivo = participante.get().getMotivoBanimento();
+
+    if (participante.isPresent()) {
+
+      if (motivo != null && !motivo.isBlank()) {
+        throw new RuntimeException(
+                "Você foi banido deste grupo. Motivo: " + motivo);
+      }
+
+      throw new RuntimeException("Você foi banido deste grupo. " + motivo);
     }
 
     int lotacaoMaxima = grupo.getNumeroParticipantes();
@@ -342,8 +356,93 @@ public class GrupoTematicoService {
             .usuario(usuario)
             .status(StatusDenuncia.PENDENTE) // ou ABERTO, conforme sua regra
             .descricao(descricao)
+                .verdadeira(ConsistenciaDenuncia.VERIFICANDO)
             .build();
 
     denunciarGrupoRepository.save(denuncia);
   }
+
+
+
+
+  @Transactional
+  public void banirParticipante(Long grupoId, UUID usuarioBanidoId, String motivo, Perfil perfilLogado) {
+
+
+
+
+    ParticipanteGrupo executor =
+            participanteGrupoRepository
+                    .findByGrupoIdAndUsuarioId(grupoId, perfilLogado.getUsuario().getId())
+                    .orElseThrow(() ->
+                            new RuntimeException("Você não participa deste grupo."));
+
+
+    if (executor.getRole() != GrupoRole.CRIADORA) {
+      throw new RuntimeException("Apenas a criadora pode banir participantes.");
+    }
+
+
+    ParticipanteGrupo participante =
+            participanteGrupoRepository
+                    .findByGrupoIdAndUsuarioId(grupoId, usuarioBanidoId)
+                    .orElseThrow(() ->
+                            new RuntimeException("Participante não encontrado."));
+
+
+    if (participante.getRole() == GrupoRole.CRIADORA) {
+      throw new RuntimeException("A criadora não pode ser banida.");
+    }
+
+    participante.setAtivo(false);
+
+    participanteGrupoRepository.save(participante);
+  }
+
+  public Page<DenunciaGrupoResponseDTO> listarDenuncias(DenunciaGrupoFilterDTO filtro, int pagina, int tamanho) {
+    Pageable pageable = PageRequest.of(pagina, tamanho, Sort.by("id").descending());
+
+    Specification<DenunciarGrupo> spec = DenunciarGrupoSpecification.filtrar(filtro);
+
+    Page<DenunciarGrupo> denuncias = denunciarGrupoRepository.findAll(spec, pageable);
+
+    // Converte cada entidade DenunciarGrupo em DenunciaGrupoResponseDTO
+    return denuncias.map(DenunciaGrupoResponseDTO::new);
+  }
+
+  @Transactional
+  public DenunciarGrupo atualizarParcial(Long id, AtualizarDenunciaDTO dto) {
+
+    DenunciarGrupo denuncia = denunciarGrupoRepository.findById(id)
+            .orElseThrow(() -> new RuntimeException("Denúncia não encontrada com o ID: " + id));
+
+
+    if (dto.status() != null && !dto.status().isBlank()) {
+      try {
+        StatusDenuncia novoStatus = StatusDenuncia.valueOf(dto.status().trim().toUpperCase());
+        denuncia.setStatus(novoStatus);
+      } catch (IllegalArgumentException e) {
+
+      }
+    }
+
+
+    if (dto.descricao() != null && !dto.descricao().isBlank()) {
+      denuncia.setDescricao(dto.descricao());
+    }
+
+    if (dto.verdadeira() != null && !dto.verdadeira().isBlank()) {
+      try {
+
+        ConsistenciaDenuncia consistencia = ConsistenciaDenuncia.valueOf(dto.verdadeira().trim().toUpperCase());
+        denuncia.setVerdadeira(consistencia);
+      } catch (IllegalArgumentException e) {
+
+      }
+    }
+
+    return denunciarGrupoRepository.save(denuncia);
+  }
+
+
 }

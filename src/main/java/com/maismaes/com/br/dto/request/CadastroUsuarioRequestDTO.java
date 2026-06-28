@@ -20,11 +20,30 @@ public record CadastroUsuarioRequestDTO(
             message = "Senha não atende aos critérios de segurança")
         String senha) {
   public Usuario toUsuarioEntity(String senha) {
-    return Usuario.builder()
-        .nome(nome)
-        .email(email)
-        .telefone(telefone)
-        .perfil(Perfil.builder().perfilEmail(email).senha(senha).role(Role.MAE_SOLO).build())
-        .build();
-  }
+//    return Usuario.builder()
+//        .nome(nome)
+//        .email(email)
+//        .telefone(telefone)
+//        .perfil(Perfil.builder().perfilEmail(email).senha(senha).role(Role.MAE_SOLO).build())
+//        .build();
+//  }
+
+
+      Perfil perfil = Perfil.builder()
+              .perfilEmail(email)
+              .senha(senha)
+              .role(Role.MAE_SOLO)
+              .build();
+
+      Usuario usuario = Usuario.builder()
+              .nome(nome)
+              .email(email)
+              .telefone(telefone)
+              .perfil(perfil)
+              .build();
+
+      perfil.setUsuario(usuario);
+
+      return usuario;
+}
 }
