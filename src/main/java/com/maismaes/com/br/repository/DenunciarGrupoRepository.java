@@ -7,13 +7,18 @@ import java.util.UUID;
 import org.springframework.data.jpa.repository.JpaRepository;
 
 import com.maismaes.com.br.entities.grupo_tematico.DenunciarGrupo;
-import com.maismaes.com.br.entities.grupo_tematico.ParticipanteGrupo;
 
 public interface DenunciarGrupoRepository extends JpaRepository<DenunciarGrupo, Long> {
 
-    // Busca o vínculo de uma usuária específica em um grupo específico
-    Optional<ParticipanteGrupo> findByGrupoIdAndUsuarioId(Long grupoId, UUID usuarioId);
+    // Busca todas as denúncias de um grupo
+    List<DenunciarGrupo> findByGrupoId(Long grupo);
 
-    // Busca todos os vínculos de um usuário (para listar os grupos em que participa)
-    List<ParticipanteGrupo> findByUsuarioId(UUID usuarioId);
+    // Busca todas as denúncias feitas por um usuário
+    List<DenunciarGrupo> findByUsuarioId(UUID usuario);
+
+    // Busca denúncia específica de um usuário em um grupo
+    Optional<DenunciarGrupo> findByGrupoIdAndUsuarioId(Long grupo, UUID usuario);
+
+    // Verifica se o usuário já denunciou o grupo
+    boolean existsByGrupoIdAndUsuarioId(Long grupoId, UUID usuarioId);
 }

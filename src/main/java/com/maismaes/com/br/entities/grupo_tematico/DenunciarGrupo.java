@@ -1,12 +1,6 @@
 package com.maismaes.com.br.entities.grupo_tematico;
 
-import java.time.LocalDateTime;
-
-import org.hibernate.annotations.CreationTimestamp;
-import org.hibernate.annotations.UpdateTimestamp;
-
 import com.maismaes.com.br.entities.Usuario;
-
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
@@ -17,11 +11,14 @@ import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
 import jakarta.persistence.UniqueConstraint;
+import java.time.LocalDateTime;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
+import org.hibernate.annotations.CreationTimestamp;
+import org.hibernate.annotations.UpdateTimestamp;
 
 @Table(
     name = "denunciar_grupo",
@@ -37,31 +34,29 @@ import lombok.Setter;
 @Builder
 public class DenunciarGrupo {
 
-    @Id
-    @GeneratedValue(strategy = jakarta.persistence.GenerationType.IDENTITY)
-    private Long id;
-    
-    @ManyToOne
-    @JoinColumn(name = "usuario_id", nullable = false)
-    private Usuario usuario;
+  @Id
+  @GeneratedValue(strategy = jakarta.persistence.GenerationType.IDENTITY)
+  private Long id;
 
-    @ManyToOne
-    @JoinColumn(name = "grupo_id", nullable = false)
-    private GrupoTematico grupo;
+  @ManyToOne
+  @JoinColumn(name = "usuario_id", nullable = false)
+  private Usuario usuario;
 
-    @Enumerated(EnumType.STRING)
-    @Column
-    private StatusDenuncia status;
+  @ManyToOne
+  @JoinColumn(name = "grupo_id", nullable = false)
+  private GrupoTematico grupo;
 
-    @Column
-    private String descricao;
+  @Enumerated(EnumType.STRING)
+  @Column
+  private StatusDenuncia status;
 
-    @CreationTimestamp
-    @Column(name = "data_denunciada", nullable = false, updatable = false)
-    private LocalDateTime dataDenunciada;
+  @Column private String descricao;
 
-    @UpdateTimestamp
-    @Column(name = "atualizado_em", nullable = false)
-    private LocalDateTime atualizadoEm;
+  @CreationTimestamp
+  @Column(name = "data_denunciada", nullable = false, updatable = false)
+  private LocalDateTime dataDenunciada;
 
+  @UpdateTimestamp
+  @Column(name = "atualizado_em", nullable = false)
+  private LocalDateTime atualizadoEm;
 }

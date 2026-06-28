@@ -1,5 +1,13 @@
 package com.maismaes.com.br.service;
 
+import java.time.LocalDateTime;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
+import java.util.UUID;
+
+import org.springframework.stereotype.Service;
+
 import com.maismaes.com.br.dto.request.EditarGrupoTematicoRequestDTO;
 import com.maismaes.com.br.dto.response.DetalheGrupoResponseDTO;
 import com.maismaes.com.br.dto.response.ListarGrupoTematicoDTO;
@@ -9,21 +17,19 @@ import com.maismaes.com.br.entities.Perfil;
 import com.maismaes.com.br.entities.Usuario;
 import com.maismaes.com.br.entities.grupo_tematico.Bairro;
 import com.maismaes.com.br.entities.grupo_tematico.Categoria;
+import com.maismaes.com.br.entities.grupo_tematico.DenunciarGrupo;
 import com.maismaes.com.br.entities.grupo_tematico.FavoritoGrupo;
 import com.maismaes.com.br.entities.grupo_tematico.GrupoRole;
 import com.maismaes.com.br.entities.grupo_tematico.GrupoTematico;
 import com.maismaes.com.br.entities.grupo_tematico.ParticipanteGrupo;
+import com.maismaes.com.br.entities.grupo_tematico.StatusDenuncia;
+import com.maismaes.com.br.repository.DenunciarGrupoRepository;
 import com.maismaes.com.br.repository.FavoritoGrupoRepository;
 import com.maismaes.com.br.repository.GrupoTematicoRepository;
 import com.maismaes.com.br.repository.ParticipanteGrupoRepository;
+
 import jakarta.transaction.Transactional;
-import java.time.LocalDateTime;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
-import java.util.UUID;
 import lombok.RequiredArgsConstructor;
-import org.springframework.stereotype.Service;
 
 @RequiredArgsConstructor
 @Service
@@ -32,6 +38,8 @@ public class GrupoTematicoService {
   private final GrupoTematicoRepository grupoTematicoRepository;
   private final ParticipanteGrupoRepository participanteGrupoRepository;
   private final FavoritoGrupoRepository favoritoGrupoRepository;
+  private final DenunciarGrupoRepository denunciarGrupoRepository;
+
 
   @Transactional
   public GrupoTematico criarGrupoTematico(
@@ -311,4 +319,32 @@ public class GrupoTematicoService {
 
     grupoTematicoRepository.delete(grupo);
   }
+
+  //Denuncia grupo
+@Transactional
+public void denunciarGrupo(Long grupoId, Perfil perfilLogado, String descricao) {
+    GrupoTematico grupo = grupoTematicoRepository.findById(grupoId)
+        .orElseThrow(() -> new RuntimeException("Grupo não encontrado"));
+
+    Usuario usuario = perfilLogado.getUsuario();
+
+    boolean participa = participanteGrupoRepository.existsByGrupoIdAndUsuarioId(grupoId, usuario.getId());
+    if (!participa) {
+        throw new RuntimeException("Você não pode denunciar um grupo do qual não participa.");
+    }
+
+    if (denunciarGrupoRepository.existsByGrupoIdAndUsuarioId(grupoId, usuario.getId())) {
+        throw new RuntimeException("Você já denunciou este grupo.");
+    }
+
+    DenunciarGrupo denuncia = DenunciarGrupo.builder()
+        .grupo(grupo)
+        .usuario(usuario)
+        .status(StatusDenuncia.PENDENTE) // ou ABERTO, conforme sua regra
+        .descricao(descricao)
+        .build();
+
+    denunciarGrupoRepository.save(denuncia);
+}
+
 }

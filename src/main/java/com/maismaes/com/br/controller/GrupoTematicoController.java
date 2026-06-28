@@ -17,6 +17,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.maismaes.com.br.dto.request.CriarDenunciaGrupoRequestDTO;
 import com.maismaes.com.br.dto.request.CriarGrupoTematicoRequestDTO;
 import com.maismaes.com.br.dto.request.EditarGrupoTematicoRequestDTO;
 import com.maismaes.com.br.dto.response.DetalheGrupoResponseDTO;
@@ -158,4 +159,18 @@ public class GrupoTematicoController {
       return ResponseEntity.status(HttpStatus.NOT_FOUND).body(e.getMessage());
     }
   }
+
+  // Criar denúncia (DEnunciar grupo tematico)
+  @PostMapping("/denunciar/{id}")
+  public ResponseEntity<String> denunciarGrupo(
+      @PathVariable Long id,
+      @AuthenticationPrincipal Perfil perfilLogado,
+      @RequestBody @Valid CriarDenunciaGrupoRequestDTO request) {
+
+      grupoTematicoService.denunciarGrupo(id, perfilLogado, request.descricao());
+
+      return ResponseEntity.status(HttpStatus.CREATED)
+          .body("Denúncia registrada com sucesso!");
+  }
+
 }
