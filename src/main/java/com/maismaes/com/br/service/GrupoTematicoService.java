@@ -20,6 +20,7 @@ import jakarta.transaction.Transactional;
 import java.time.LocalDateTime;
 import java.util.*;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -27,6 +28,7 @@ import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 
+@Slf4j
 @RequiredArgsConstructor
 @Service
 public class GrupoTematicoService {
@@ -35,10 +37,15 @@ public class GrupoTematicoService {
   private final ParticipanteGrupoRepository participanteGrupoRepository;
   private final FavoritoGrupoRepository favoritoGrupoRepository;
   private final DenunciarGrupoRepository denunciarGrupoRepository;
+  private final EmailService emailService;
 
   @Transactional
   public GrupoTematico criarGrupoTematico(
       GrupoTematico grupo, List<String> nomesBairros, Perfil perfilLogado) {
+    log.info(
+        "[GrupoTematicoService] criarGrupoTematico - Iniciando criação de grupo para usuário: {}",
+        perfilLogado.getUsuario().getId());
+
     Usuario criadora = perfilLogado.getUsuario();
     grupo.setCriador(criadora);
 
@@ -52,7 +59,6 @@ public class GrupoTematicoService {
 
     grupo.getParticipantes().add(vinculoAdm);
 
-    // Transformar List<String> em List<Bairro> vinculando ao grupo
     List<Bairro> bairrosEntities =
         nomesBairros.stream()
             .map(nome -> Bairro.builder().nome(nome).grupo(grupo).build())
@@ -60,26 +66,36 @@ public class GrupoTematicoService {
 
     grupo.setBairros(bairrosEntities);
 
-    return grupoTematicoRepository.save(grupo);
+    GrupoTematico salvo = grupoTematicoRepository.save(grupo);
+    log.info(
+        "[GrupoTematicoService] criarGrupoTematico - Grupo criado com sucesso. ID: {}",
+        salvo.getId());
+    return salvo;
   }
 
   // Editar grupo
   @Transactional
   public GrupoTematico atualizarGrupo(
       Long grupoId, EditarGrupoTematicoRequestDTO dto, Perfil perfilLogado) {
+    log.info(
+        "[GrupoTematicoService] atualizarGrupo - Usuário {} tentando editar grupo ID: {}",
+        perfilLogado.getUsuario().getId(),
+        grupoId);
 
     ParticipanteGrupo executor =
         participanteGrupoRepository
             .findByGrupoIdAndUsuarioId(grupoId, perfilLogado.getUsuario().getId())
             .orElseThrow(() -> new RuntimeException("Você não faz parte deste grupo"));
 
-    // Apenas criadora e moderadora podem editar(APLICAÇÃO DA ROLE DO GRUPO)
     if (executor.getRole() == GrupoRole.PARTICIPANTE) {
+      log.warn(
+          "[GrupoTematicoService] atualizarGrupo - Usuário {} sem permissão para editar grupo {}",
+          perfilLogado.getUsuario().getId(),
+          grupoId);
       throw new RuntimeException(
           "Ação negada: Apenas moderadoras ou a criadora podem editar o grupo.");
     }
 
-    // Busca o grupo no banco
     GrupoTematico grupo =
         grupoTematicoRepository
             .findById(grupoId)
@@ -96,11 +112,11 @@ public class GrupoTematicoService {
     grupo.setImagem(dto.imagem());
     grupo.setDocumento(dto.documento());
 
-    // Parte da edição dos bairros
     List<String> bairrosAtuais = grupo.getBairros().stream().map(Bairro::getNome).toList();
 
     if (dto.bairros() != null && !dto.bairros().isEmpty() && !bairrosAtuais.equals(dto.bairros())) {
-
+      log.info(
+          "[GrupoTematicoService] atualizarGrupo - Atualizando bairros do grupo {}", grupoId);
       grupo.getBairros().clear();
 
       List<Bairro> novosBairros =
@@ -111,12 +127,20 @@ public class GrupoTematicoService {
       grupo.getBairros().addAll(novosBairros);
     }
 
-    return grupoTematicoRepository.save(grupo);
+    GrupoTematico atualizado = grupoTematicoRepository.save(grupo);
+    log.info(
+        "[GrupoTematicoService] atualizarGrupo - Grupo {} atualizado com sucesso", grupoId);
+    return atualizado;
   }
 
   // Entrar em um grupo
   @Transactional
   public void entrarNoGrupo(Long grupoId, Perfil perfilLogado) {
+    log.info(
+        "[GrupoTematicoService] entrarNoGrupo - Usuário {} tentando entrar no grupo {}",
+        perfilLogado.getUsuario().getId(),
+        grupoId);
+
     GrupoTematico grupo =
         grupoTematicoRepository
             .findById(grupoId)
@@ -124,26 +148,40 @@ public class GrupoTematicoService {
 
     Usuario usuario = perfilLogado.getUsuario();
 
-    //    if (participanteGrupoRepository.existsByGrupoIdAndUsuarioId(grupoId, usuario.getId())) {
-    //      throw new RuntimeException("Você já é participante deste grupo.");
-    //    }
-
     Optional<ParticipanteGrupo> participante =
         participanteGrupoRepository.findByGrupoIdAndUsuarioId(grupoId, usuario.getId());
-    String motivo = participante.get().getMotivoBanimento();
 
     if (participante.isPresent()) {
-
+      String motivo = participante.get().getMotivoBanimento();
       if (motivo != null && !motivo.isBlank()) {
+        log.warn(
+            "[GrupoTematicoService] entrarNoGrupo - Usuário {} está banido do grupo {}. Motivo: {}",
+            usuario.getId(),
+            grupoId,
+            motivo);
         throw new RuntimeException("Você foi banido deste grupo. Motivo: " + motivo);
       }
-
-      throw new RuntimeException("Você foi banido deste grupo. " + motivo);
+      log.warn(
+          "[GrupoTematicoService] entrarNoGrupo - Usuário {} já é participante do grupo {}",
+          usuario.getId(),
+          grupoId);
+      throw new RuntimeException("Você já é participante deste grupo.");
     }
 
     int lotacaoMaxima = grupo.getNumeroParticipantes();
     int participantesAtuais = grupo.getParticipantes().size();
+    log.info(
+        "[GrupoTematicoService] entrarNoGrupo - Grupo {}: {}/{} participantes",
+        grupoId,
+        participantesAtuais,
+        lotacaoMaxima);
+
     if (participantesAtuais >= lotacaoMaxima) {
+      log.warn(
+          "[GrupoTematicoService] entrarNoGrupo - Grupo {} está lotado ({}/{})",
+          grupoId,
+          participantesAtuais,
+          lotacaoMaxima);
       throw new RuntimeException("Grupo lotado: número máximo de participantes atingido.");
     }
 
@@ -156,21 +194,48 @@ public class GrupoTematicoService {
             .build();
 
     participanteGrupoRepository.save(vinculo);
+    log.info(
+        "[GrupoTematicoService] entrarNoGrupo - Usuário {} entrou no grupo {} com sucesso",
+        usuario.getNome(),
+        grupoId);
+
+    String emailAdmin = grupo.getCriador().getEmail();
+    String nomeGrupo = grupo.getTitulo();
+    String nomeParticipante = usuario.getNome();
+    emailService.notificarNovoParticipante(emailAdmin, nomeGrupo, nomeParticipante);
   }
 
   // Listar grupos que o usuário participa
   public List<ListarGrupoTematicoDTO> listarGruposDoUsuario(Perfil perfilLogado) {
-    return participanteGrupoRepository.findByUsuarioId(perfilLogado.getUsuario().getId()).stream()
-        .map(ParticipanteGrupo::getGrupo)
-        .map(ListarGrupoTematicoDTO::new)
-        .toList();
+    log.info(
+        "[GrupoTematicoService] listarGruposDoUsuario - Listando grupos do usuário: {}",
+        perfilLogado.getUsuario().getNome());
+    List<ListarGrupoTematicoDTO> grupos =
+        participanteGrupoRepository.findByUsuarioId(perfilLogado.getUsuario().getId()).stream()
+            .map(ParticipanteGrupo::getGrupo)
+            .map(ListarGrupoTematicoDTO::new)
+            .toList();
+    log.info(
+        "[GrupoTematicoService] listarGruposDoUsuario - {} grupo(s) encontrado(s) para o usuário {}",
+        grupos.size(),
+        perfilLogado.getUsuario().getNome());
+    return grupos;
   }
 
   @Transactional
   public void favoritarGrupo(Long grupoId, Perfil perfilLogado) {
+    log.info(
+        "[GrupoTematicoService] favoritarGrupo - Usuário {} favoritando grupo {}",
+        perfilLogado.getUsuario().getNome(),
+        grupoId);
+
     Usuario usuario = perfilLogado.getUsuario();
 
     if (favoritoGrupoRepository.existsByGrupoIdAndUsuarioId(grupoId, usuario.getId())) {
+      log.info(
+          "[GrupoTematicoService] favoritarGrupo - Grupo {} já está favoritado pelo usuário {}",
+          grupoId,
+          usuario.getNome());
       return;
     }
 
@@ -187,31 +252,60 @@ public class GrupoTematicoService {
             .build();
 
     favoritoGrupoRepository.save(favorito);
+    log.info(
+        "[GrupoTematicoService] favoritarGrupo - Grupo {} favoritado com sucesso pelo usuário {}",
+        grupoId,
+        usuario.getNome());
   }
 
   @Transactional
   public void removerFavoritoGrupo(Long grupoId, Perfil perfilLogado) {
+    log.info(
+        "[GrupoTematicoService] removerFavoritoGrupo - Usuário {} removendo favorito do grupo {}",
+        perfilLogado.getUsuario().getNome(),
+        grupoId);
+
     if (!grupoTematicoRepository.existsById(grupoId)) {
       throw new RuntimeException("Grupo nao encontrado.");
     }
 
     favoritoGrupoRepository.deleteByGrupoIdAndUsuarioId(grupoId, perfilLogado.getUsuario().getId());
+    log.info(
+        "[GrupoTematicoService] removerFavoritoGrupo - Favorito removido com sucesso. Grupo: {}, Usuário: {}",
+        grupoId,
+        perfilLogado.getUsuario().getNome());
   }
 
   public List<ListarGrupoTematicoDTO> listarGruposFavoritos(Perfil perfilLogado) {
-    return favoritoGrupoRepository.findByUsuarioId(perfilLogado.getUsuario().getId()).stream()
-        .map(FavoritoGrupo::getGrupo)
-        .map(ListarGrupoTematicoDTO::new)
-        .toList();
+    log.info(
+        "[GrupoTematicoService] listarGruposFavoritos - Listando favoritos do usuário: {}",
+        perfilLogado.getUsuario().getNome());
+    List<ListarGrupoTematicoDTO> favoritos =
+        favoritoGrupoRepository.findByUsuarioId(perfilLogado.getUsuario().getId()).stream()
+            .map(FavoritoGrupo::getGrupo)
+            .map(ListarGrupoTematicoDTO::new)
+            .toList();
+    log.info(
+        "[GrupoTematicoService] listarGruposFavoritos - {} favorito(s) encontrado(s) para o usuário {}",
+        favoritos.size(),
+        perfilLogado.getUsuario().getNome());
+    return favoritos;
   }
 
   public List<ListarGrupoTematicoDTO> listarTodos() {
-    return grupoTematicoRepository.findAll().stream().map(ListarGrupoTematicoDTO::new).toList();
+    log.info("[GrupoTematicoService] listarTodos - Listando todos os grupos");
+    List<ListarGrupoTematicoDTO> grupos =
+        grupoTematicoRepository.findAll().stream().map(ListarGrupoTematicoDTO::new).toList();
+    log.info("[GrupoTematicoService] listarTodos - {} grupo(s) encontrado(s)", grupos.size());
+    return grupos;
   }
 
   // Obter grupo especifico - detalhe do grupo
   @Transactional
   public DetalheGrupoResponseDTO obterDetalhes(Long grupoId, UUID usuarioLogadoId) {
+    log.info(
+        "[GrupoTematicoService] obterDetalhes - Buscando detalhes do grupo {}",
+        grupoId);
 
     GrupoTematico grupo =
         grupoTematicoRepository
@@ -234,11 +328,16 @@ public class GrupoTematicoService {
             .findFirst();
 
     boolean isParticipante = participanteLogado.isPresent();
-
     String roleLogada = participanteLogado.map(p -> p.getRole().name()).orElse(null);
 
     boolean usuarioLogadoFavoritou =
         favoritoGrupoRepository.existsByGrupoIdAndUsuarioId(grupoId, usuarioLogadoId);
+
+    log.info(
+        "[GrupoTematicoService] obterDetalhes - Detalhes do grupo {} retornados. Participante: {}, Role: {}",
+        grupoId,
+        isParticipante,
+        roleLogada);
 
     return new DetalheGrupoResponseDTO(
         grupo.getId(),
@@ -261,6 +360,8 @@ public class GrupoTematicoService {
 
   // Pesquisa global sem filtros
   public List<ListarGrupoTematicoDTO> pesquisarGrupoTematico(String termo) {
+    log.info("[GrupoTematicoService] pesquisarGrupoTematico - Termo de busca: '{}'", termo);
+
     if (termo == null || termo.trim().isEmpty()) {
       throw new RuntimeException("Nenhum grupo encontrado");
     }
@@ -269,7 +370,6 @@ public class GrupoTematicoService {
     Set<GrupoTematico> resultados = new HashSet<>();
 
     try {
-
       if (busca.matches("\\d+")) {
         grupoTematicoRepository.findById(Long.parseLong(busca)).ifPresent(resultados::add);
       }
@@ -278,37 +378,64 @@ public class GrupoTematicoService {
         Categoria categoria = Categoria.valueOf(busca.toUpperCase());
         resultados.addAll(grupoTematicoRepository.findByCategorias(categoria));
       } catch (IllegalArgumentException e) {
-
+        log.debug(
+            "[GrupoTematicoService] pesquisarGrupoTematico - '{}' não corresponde a nenhuma categoria",
+            busca);
       }
 
       resultados.addAll(grupoTematicoRepository.findByTituloContainingIgnoreCase(busca));
-
       resultados.addAll(grupoTematicoRepository.buscarPorNomeBairro(busca));
 
       if (resultados.isEmpty()) {
+        log.info(
+            "[GrupoTematicoService] pesquisarGrupoTematico - Nenhum resultado para '{}'", busca);
         throw new RuntimeException("Nenhum grupo encontrado");
       }
 
+      log.info(
+          "[GrupoTematicoService] pesquisarGrupoTematico - {} resultado(s) encontrado(s) para '{}'",
+          resultados.size(),
+          busca);
       return resultados.stream().map(ListarGrupoTematicoDTO::new).toList();
 
     } catch (RuntimeException e) {
       throw e;
     } catch (Exception e) {
+      log.error(
+          "[GrupoTematicoService] pesquisarGrupoTematico - Erro inesperado ao pesquisar '{}'",
+          busca,
+          e);
       throw new RuntimeException("Erro inesperado ao realizar a pesquisa");
     }
   }
 
   // Verificar se o usuário autenticado é participante de um grupo
   public MembroStatusResponseDTO verificarParticipacao(Long grupoId, Perfil perfilLogado) {
-    return participanteGrupoRepository
-        .findByGrupoIdAndUsuarioId(grupoId, perfilLogado.getUsuario().getId())
-        .map(p -> new MembroStatusResponseDTO(true, p.getRole().name()))
-        .orElse(new MembroStatusResponseDTO(false, null));
+    log.info(
+        "[GrupoTematicoService] verificarParticipacao - Verificando participação do usuário {} no grupo {}",
+        perfilLogado.getUsuario().getNome(),
+        grupoId);
+    MembroStatusResponseDTO status =
+        participanteGrupoRepository
+            .findByGrupoIdAndUsuarioId(grupoId, perfilLogado.getUsuario().getId())
+            .map(p -> new MembroStatusResponseDTO(true, p.getRole().name()))
+            .orElse(new MembroStatusResponseDTO(false, null));
+    log.info(
+        "[GrupoTematicoService] verificarParticipacao - Usuário {} no grupo {}: participante={}, role={}",
+        perfilLogado.getUsuario().getNome(),
+        grupoId,
+        status.participante(),
+        status.role());
+    return status;
   }
 
   // excluir
   @Transactional
   public void excluirGrupo(Long grupoId, Perfil perfilLogado) {
+    log.info(
+        "[GrupoTematicoService] excluirGrupo - Usuário {} tentando excluir grupo {}",
+        perfilLogado.getUsuario().getNome(),
+        grupoId);
 
     ParticipanteGrupo executor =
         participanteGrupoRepository
@@ -317,6 +444,10 @@ public class GrupoTematicoService {
                 () -> new RuntimeException("Você não tem permissão para acessar este grupo."));
 
     if (executor.getRole() != GrupoRole.CRIADORA) {
+      log.warn(
+          "[GrupoTematicoService] excluirGrupo - Usuário {} sem permissão para excluir grupo {}",
+          perfilLogado.getUsuario().getNome(),
+          grupoId);
       throw new RuntimeException("Ação negada: Apenas a criadora original pode excluir o grupo.");
     }
 
@@ -326,11 +457,20 @@ public class GrupoTematicoService {
             .orElseThrow(() -> new RuntimeException("Grupo não encontrado."));
 
     grupoTematicoRepository.delete(grupo);
+    log.info(
+        "[GrupoTematicoService] excluirGrupo - Grupo {} excluído com sucesso pelo usuário {}",
+        grupoId,
+        perfilLogado.getUsuario().getNome());
   }
 
   // Denuncia grupo
   @Transactional
   public void denunciarGrupo(Long grupoId, Perfil perfilLogado, String descricao) {
+    log.info(
+        "[GrupoTematicoService] denunciarGrupo - Usuário {} denunciando grupo {}",
+        perfilLogado.getUsuario().getNome(),
+        grupoId);
+
     GrupoTematico grupo =
         grupoTematicoRepository
             .findById(grupoId)
@@ -341,10 +481,18 @@ public class GrupoTematicoService {
     boolean participa =
         participanteGrupoRepository.existsByGrupoIdAndUsuarioId(grupoId, usuario.getId());
     if (!participa) {
+      log.warn(
+          "[GrupoTematicoService] denunciarGrupo - Usuário {} não participa do grupo {} e tentou denunciar",
+          usuario.getNome(),
+          grupoId);
       throw new RuntimeException("Você não pode denunciar um grupo do qual não participa.");
     }
 
     if (denunciarGrupoRepository.existsByGrupoIdAndUsuarioId(grupoId, usuario.getId())) {
+      log.warn(
+          "[GrupoTematicoService] denunciarGrupo - Usuário {} já denunciou o grupo {}",
+          usuario.getId(),
+          grupoId);
       throw new RuntimeException("Você já denunciou este grupo.");
     }
 
@@ -352,17 +500,26 @@ public class GrupoTematicoService {
         DenunciarGrupo.builder()
             .grupo(grupo)
             .usuario(usuario)
-            .status(StatusDenuncia.PENDENTE) // ou ABERTO, conforme sua regra
+            .status(StatusDenuncia.PENDENTE)
             .descricao(descricao)
             .verdadeira(ConsistenciaDenuncia.VERIFICANDO)
             .build();
 
     denunciarGrupoRepository.save(denuncia);
+    log.info(
+        "[GrupoTematicoService] denunciarGrupo - Denúncia registrada com sucesso. Grupo: {}, Usuário: {}",
+        grupoId,
+        usuario.getId());
   }
 
   @Transactional
   public void banirParticipante(
       Long grupoId, UUID usuarioBanidoId, String motivo, Perfil perfilLogado) {
+    log.info(
+        "[GrupoTematicoService] banirParticipante - Usuário {} tentando banir {} do grupo {}",
+        perfilLogado.getUsuario().getNome(),
+        usuarioBanidoId,
+        grupoId);
 
     ParticipanteGrupo executor =
         participanteGrupoRepository
@@ -370,6 +527,10 @@ public class GrupoTematicoService {
             .orElseThrow(() -> new RuntimeException("Você não participa deste grupo."));
 
     if (executor.getRole() != GrupoRole.CRIADORA) {
+      log.warn(
+          "[GrupoTematicoService] banirParticipante - Usuário {} sem permissão para banir no grupo {}",
+          perfilLogado.getUsuario().getNome(),
+          grupoId);
       throw new RuntimeException("Apenas a criadora pode banir participantes.");
     }
 
@@ -379,28 +540,44 @@ public class GrupoTematicoService {
             .orElseThrow(() -> new RuntimeException("Participante não encontrado."));
 
     if (participante.getRole() == GrupoRole.CRIADORA) {
+      log.warn(
+          "[GrupoTematicoService] banirParticipante - Tentativa de banir a criadora do grupo {}",
+          grupoId);
       throw new RuntimeException("A criadora não pode ser banida.");
     }
 
     participante.setAtivo(false);
-
+    participante.setMotivoBanimento(motivo);
     participanteGrupoRepository.save(participante);
+    log.info(
+        "[GrupoTematicoService] banirParticipante - Usuário {} banido do grupo {} com sucesso. Motivo: {}",
+        usuarioBanidoId,
+        grupoId,
+        motivo);
   }
 
   public Page<DenunciaGrupoResponseDTO> listarDenuncias(
       DenunciaGrupoFilterDTO filtro, int pagina, int tamanho) {
+    log.info(
+        "[GrupoTematicoService] listarDenuncias - Listando denúncias. Página: {}, Tamanho: {}",
+        pagina,
+        tamanho);
+
     Pageable pageable = PageRequest.of(pagina, tamanho, Sort.by("id").descending());
-
     Specification<DenunciarGrupo> spec = DenunciarGrupoSpecification.filtrar(filtro);
-
     Page<DenunciarGrupo> denuncias = denunciarGrupoRepository.findAll(spec, pageable);
 
-    // Converte cada entidade DenunciarGrupo em DenunciaGrupoResponseDTO
+    log.info(
+        "[GrupoTematicoService] listarDenuncias - {} denúncia(s) encontrada(s) na página {}",
+        denuncias.getNumberOfElements(),
+        pagina);
     return denuncias.map(DenunciaGrupoResponseDTO::new);
   }
 
   @Transactional
   public DenunciarGrupo atualizarParcial(Long id, AtualizarDenunciaDTO dto) {
+    log.info(
+        "[GrupoTematicoService] atualizarParcial - Atualizando denúncia ID: {}", id);
 
     DenunciarGrupo denuncia =
         denunciarGrupoRepository
@@ -411,8 +588,14 @@ public class GrupoTematicoService {
       try {
         StatusDenuncia novoStatus = StatusDenuncia.valueOf(dto.status().trim().toUpperCase());
         denuncia.setStatus(novoStatus);
+        log.info(
+            "[GrupoTematicoService] atualizarParcial - Status da denúncia {} atualizado para {}",
+            id,
+            novoStatus);
       } catch (IllegalArgumentException e) {
-
+        log.warn(
+            "[GrupoTematicoService] atualizarParcial - Status inválido informado: '{}'",
+            dto.status());
       }
     }
 
@@ -422,15 +605,23 @@ public class GrupoTematicoService {
 
     if (dto.verdadeira() != null && !dto.verdadeira().isBlank()) {
       try {
-
         ConsistenciaDenuncia consistencia =
             ConsistenciaDenuncia.valueOf(dto.verdadeira().trim().toUpperCase());
         denuncia.setVerdadeira(consistencia);
+        log.info(
+            "[GrupoTematicoService] atualizarParcial - Consistência da denúncia {} atualizada para {}",
+            id,
+            consistencia);
       } catch (IllegalArgumentException e) {
-
+        log.warn(
+            "[GrupoTematicoService] atualizarParcial - Consistência inválida informada: '{}'",
+            dto.verdadeira());
       }
     }
 
-    return denunciarGrupoRepository.save(denuncia);
+    DenunciarGrupo salva = denunciarGrupoRepository.save(denuncia);
+    log.info(
+        "[GrupoTematicoService] atualizarParcial - Denúncia {} atualizada com sucesso", id);
+    return salva;
   }
 }

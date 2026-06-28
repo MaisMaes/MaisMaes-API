@@ -43,10 +43,38 @@ public class EmailService {
           destinatario);
       return true;
     } catch (Exception ex) {
-      log.info(
+      log.error(
           "[REQUISIÇÃO][EmailService] - Falha ao enviar código de recuperação de senha para: {}",
           destinatario,
           ex);
+      return false;
+    }
+  }
+
+  public boolean notificarNovoParticipante(
+      String email, String nomeGrupo, String nomeParticipante) {
+    log.info(
+        "[REQUISIÇÃO][EmailService] - Solicitando notificação de novo participante no grupo '{}' para: {}",
+        nomeGrupo,
+        email);
+    try {
+      restClient
+          .post()
+          .uri("/notificacao-novo-participante-grupo")
+          .contentType(MediaType.APPLICATION_JSON)
+          .body(Map.of("email", email, "nomeGrupo", nomeGrupo, "nomeParticipante", nomeParticipante))
+          .retrieve()
+          .toBodilessEntity();
+      log.info(
+          "[REQUISIÇÃO][EmailService] - Notificação de novo participante enviada com sucesso para: {}",
+          email);
+      return true;
+    } catch (Exception ex) {
+      log.error(
+          "[REQUISIÇÃO][EmailService] - Falha ao notificar administrador do grupo '{}' ({}): {}",
+          nomeGrupo,
+          email,
+          ex.getMessage());
       return false;
     }
   }
