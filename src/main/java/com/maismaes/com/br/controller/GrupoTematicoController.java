@@ -1,8 +1,21 @@
 package com.maismaes.com.br.controller;
 
+import com.maismaes.com.br.dto.request.CriarDenunciaGrupoRequestDTO;
+import com.maismaes.com.br.dto.request.CriarGrupoTematicoRequestDTO;
+import com.maismaes.com.br.dto.request.EditarGrupoTematicoRequestDTO;
+import com.maismaes.com.br.dto.response.DetalheGrupoResponseDTO;
+import com.maismaes.com.br.dto.response.EditarGrupoTematicoResponseDTO;
+import com.maismaes.com.br.dto.response.GrupoTematicoResponseDTO;
+import com.maismaes.com.br.dto.response.ListarGrupoTematicoDTO;
+import com.maismaes.com.br.dto.response.MembroStatusResponseDTO;
+import com.maismaes.com.br.entities.Perfil;
+import com.maismaes.com.br.entities.grupo_tematico.GrupoTematico;
+import com.maismaes.com.br.service.GrupoTematicoService;
+import jakarta.validation.Valid;
 import java.util.List;
 import java.util.UUID;
-
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -16,22 +29,6 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
-
-import com.maismaes.com.br.dto.request.CriarDenunciaGrupoRequestDTO;
-import com.maismaes.com.br.dto.request.CriarGrupoTematicoRequestDTO;
-import com.maismaes.com.br.dto.request.EditarGrupoTematicoRequestDTO;
-import com.maismaes.com.br.dto.response.DetalheGrupoResponseDTO;
-import com.maismaes.com.br.dto.response.EditarGrupoTematicoResponseDTO;
-import com.maismaes.com.br.dto.response.GrupoTematicoResponseDTO;
-import com.maismaes.com.br.dto.response.ListarGrupoTematicoDTO;
-import com.maismaes.com.br.dto.response.MembroStatusResponseDTO;
-import com.maismaes.com.br.entities.Perfil;
-import com.maismaes.com.br.entities.grupo_tematico.GrupoTematico;
-import com.maismaes.com.br.service.GrupoTematicoService;
-
-import jakarta.validation.Valid;
-import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
 @RequiredArgsConstructor
@@ -167,10 +164,10 @@ public class GrupoTematicoController {
       @AuthenticationPrincipal Perfil perfilLogado,
       @RequestBody @Valid CriarDenunciaGrupoRequestDTO request) {
 
-      grupoTematicoService.denunciarGrupo(id, perfilLogado, request.descricao());
+    grupoTematicoService.denunciarGrupo(id, perfilLogado, request.descricao());
 
-      return ResponseEntity.status(HttpStatus.CREATED)
-          .body("Denúncia registrada com sucesso!");
+    System.out.println("Denúncia registrada com sucesso!");
+
+    return ResponseEntity.status(HttpStatus.CREATED).body("Denúncia registrada com sucesso!");
   }
-
 }
