@@ -14,7 +14,7 @@ import org.springframework.web.client.RestClient;
 @RequiredArgsConstructor
 public class EmailService {
 
-  @Value("${mail.api.url:http://localhost:8080/api/mensagens}")
+  @Value("${mail.api.url:http://localhost:8088/api/mensagens}")
   private String URL_API_MENSAGENS;
 
   private RestClient restClient;
@@ -72,6 +72,35 @@ public class EmailService {
     } catch (Exception ex) {
       log.error(
           "[REQUISIÇÃO][EmailService] - Falha ao notificar administrador do grupo '{}' ({}): {}",
+          nomeGrupo,
+          email,
+          ex.getMessage());
+      return false;
+    }
+  }
+
+  public boolean notificarDenunciaGrupo(String email, String nomeGrupo, long qtdeDenuncias) {
+    log.info(
+        "[REQUISIÇÃO][EmailService] - Solicitando notificação de denúncias do grupo '{}' para admin: {}. Total PENDENTE: {}",
+        nomeGrupo,
+        email,
+        qtdeDenuncias);
+    try {
+      restClient
+          .post()
+          .uri("/notificacao-denuncia-grupo")
+          .contentType(MediaType.APPLICATION_JSON)
+          .body(Map.of("email", email, "nomeGrupo", nomeGrupo, "qtdeDenuncias", qtdeDenuncias))
+          .retrieve()
+          .toBodilessEntity();
+      log.info(
+          "[REQUISIÇÃO][EmailService] - Notificação de denúncia do grupo '{}' enviada com sucesso para: {}",
+          nomeGrupo,
+          email);
+      return true;
+    } catch (Exception ex) {
+      log.error(
+          "[REQUISIÇÃO][EmailService] - Falha ao notificar admin sobre denúncias do grupo '{}' ({}): {}",
           nomeGrupo,
           email,
           ex.getMessage());

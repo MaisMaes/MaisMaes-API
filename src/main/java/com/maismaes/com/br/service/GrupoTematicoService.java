@@ -21,6 +21,7 @@ import java.time.LocalDateTime;
 import java.util.*;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -32,6 +33,12 @@ import org.springframework.stereotype.Service;
 @RequiredArgsConstructor
 @Service
 public class GrupoTematicoService {
+
+  @Value("${denuncia.limiar-notificacao:1}")
+  private int LIMIAR_NOTIFICACAO_DENUNCIAS;
+
+  @Value("${admin.email:alissongabriel010907@gmail.com}")
+  private String adminEmail;
 
   private final GrupoTematicoRepository grupoTematicoRepository;
   private final ParticipanteGrupoRepository participanteGrupoRepository;
@@ -510,6 +517,21 @@ public class GrupoTematicoService {
         "[GrupoTematicoService] denunciarGrupo - Denúncia registrada com sucesso. Grupo: {}, Usuário: {}",
         grupoId,
         usuario.getId());
+
+    long totalPendentes =
+        denunciarGrupoRepository.countByGrupoIdAndStatus(grupoId, StatusDenuncia.PENDENTE);
+    log.info(
+        "[GrupoTematicoService] denunciarGrupo - Total de denúncias PENDENTE no grupo {}: {}",
+        grupoId,
+        totalPendentes);
+
+    if (totalPendentes % LIMIAR_NOTIFICACAO_DENUNCIAS == 0) {
+      log.info(
+          "[GrupoTematicoService] denunciarGrupo - Limiar de {} atingido. Notificando admin: {}",
+          LIMIAR_NOTIFICACAO_DENUNCIAS,
+          adminEmail);
+      emailService.notificarDenunciaGrupo(adminEmail, grupo.getTitulo(), totalPendentes);
+    }
   }
 
   @Transactional

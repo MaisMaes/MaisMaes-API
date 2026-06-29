@@ -35,10 +35,16 @@ security:
 
 mail:
   api:
-    url: ${MAIL_API_URL:http://localhost:8081/v1/api-mensagens}
+    url: ${MAIL_API_URL:http://localhost:8088/v1/api-mensagens}
 
 recuperacao-senha:
   expiracao-minutos: 10
+
+admin:
+  email: ${ADMIN_EMAIL:alissongabriel010907@gmail.com}
+
+denuncia:
+  limiar-notificacao: ${DENUNCIA_LIMIAR_NOTIFICACAO:1}
 
 logging:
   level:

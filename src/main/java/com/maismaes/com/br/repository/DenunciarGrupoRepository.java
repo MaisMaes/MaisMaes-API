@@ -1,6 +1,7 @@
 package com.maismaes.com.br.repository;
 
 import com.maismaes.com.br.entities.grupo_tematico.DenunciarGrupo;
+import com.maismaes.com.br.entities.grupo_tematico.StatusDenuncia;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -21,4 +22,7 @@ public interface DenunciarGrupoRepository
 
   // Verifica se o usuário já denunciou o grupo
   boolean existsByGrupoIdAndUsuarioId(Long grupoId, UUID usuarioId);
+
+  // Conta denúncias de um grupo filtradas por status
+  long countByGrupoIdAndStatus(Long grupoId, StatusDenuncia status);
 }
