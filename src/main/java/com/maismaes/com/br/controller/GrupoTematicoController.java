@@ -6,6 +6,7 @@ import com.maismaes.com.br.dto.response.EditarGrupoTematicoResponseDTO;
 import com.maismaes.com.br.dto.response.GrupoTematicoResponseDTO;
 import com.maismaes.com.br.dto.response.ListarGrupoTematicoDTO;
 import com.maismaes.com.br.dto.response.MembroStatusResponseDTO;
+import com.maismaes.com.br.dto.response.PedidoEntradaResponseDTO;
 import com.maismaes.com.br.entities.Perfil;
 import com.maismaes.com.br.entities.grupo_tematico.DenunciarGrupo;
 import com.maismaes.com.br.entities.grupo_tematico.GrupoTematico;
@@ -86,13 +87,47 @@ public class GrupoTematicoController {
     return ResponseEntity.ok(grupoTematicoService.pesquisarGrupoTematico(termo));
   }
 
-  // Entrar em um grupo
+  // Entrar em um grupo (público) ou solicitar entrada (privado)
+  @Operation(
+      summary = "Entrar ou solicitar entrada em um grupo",
+      description =
+          "Se o grupo for público, o usuário entra diretamente. Se for privado, um pedido de entrada é criado e aguarda aprovação da criadora.")
   @PostMapping("/{id}/entrar")
   public ResponseEntity<String> entrarNoGrupo(
       @PathVariable Long id, @AuthenticationPrincipal Perfil perfilLogado) {
-    log.info("[REQUISIÇÃO] - Chegada de chamda para entrar em grupo");
-    grupoTematicoService.entrarNoGrupo(id, perfilLogado);
-    return ResponseEntity.ok("Você entrou no grupo com sucesso!");
+    log.info("[REQUISIÇÃO] - Chegada de chamada para entrar em grupo");
+    String mensagem = grupoTematicoService.entrarNoGrupo(id, perfilLogado);
+    return ResponseEntity.ok(mensagem);
+  }
+
+  // Listar pedidos de entrada pendentes de um grupo
+  @Operation(
+      summary = "Listar pedidos de entrada pendentes",
+      description = "Retorna os pedidos de entrada com status PENDENTE. Apenas criadora ou moderadora podem acessar.")
+  @GetMapping("/{id}/pedidos-entrada")
+  public ResponseEntity<List<PedidoEntradaResponseDTO>> listarPedidosPendentes(
+      @PathVariable Long id, @AuthenticationPrincipal Perfil perfilLogado) {
+    log.info("[REQUISIÇÃO] - Listando pedidos de entrada pendentes do grupo {}", id);
+    return ResponseEntity.ok(grupoTematicoService.listarPedidosPendentes(id, perfilLogado));
+  }
+
+  // Aprovar ou rejeitar pedido de entrada
+  @Operation(
+      summary = "Responder pedido de entrada",
+      description = "Aprova ou rejeita um pedido de entrada em grupo privado. Apenas criadora ou moderadora podem responder.")
+  @PatchMapping("/{grupoId}/pedidos-entrada/{pedidoId}")
+  public ResponseEntity<PedidoEntradaResponseDTO> responderPedido(
+      @PathVariable Long grupoId,
+      @PathVariable Long pedidoId,
+      @RequestBody @Valid ResponderPedidoRequestDTO dto,
+      @AuthenticationPrincipal Perfil perfilLogado) {
+    log.info(
+        "[REQUISIÇÃO] - Respondendo pedido {} do grupo {}. Aprovado: {}",
+        pedidoId,
+        grupoId,
+        dto.aprovado());
+    return ResponseEntity.ok(
+        grupoTematicoService.responderPedido(grupoId, pedidoId, dto.aprovado(), perfilLogado));
   }
 
   // Listar grupos que o usuário participa

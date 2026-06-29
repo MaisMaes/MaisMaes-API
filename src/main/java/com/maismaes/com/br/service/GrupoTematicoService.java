@@ -8,6 +8,7 @@ import com.maismaes.com.br.dto.response.DetalheGrupoResponseDTO;
 import com.maismaes.com.br.dto.response.ListarGrupoTematicoDTO;
 import com.maismaes.com.br.dto.response.MembroStatusResponseDTO;
 import com.maismaes.com.br.dto.response.ParticipanteGrupoResumoResponseDTO;
+import com.maismaes.com.br.dto.response.PedidoEntradaResponseDTO;
 import com.maismaes.com.br.entities.Perfil;
 import com.maismaes.com.br.entities.Usuario;
 import com.maismaes.com.br.entities.grupo_tematico.*;
@@ -15,6 +16,7 @@ import com.maismaes.com.br.repository.DenunciarGrupoRepository;
 import com.maismaes.com.br.repository.FavoritoGrupoRepository;
 import com.maismaes.com.br.repository.GrupoTematicoRepository;
 import com.maismaes.com.br.repository.ParticipanteGrupoRepository;
+import com.maismaes.com.br.repository.PedidoEntradaGrupoRepository;
 import com.maismaes.com.br.utils.DenunciarGrupoSpecification;
 import jakarta.transaction.Transactional;
 import java.time.LocalDateTime;
@@ -44,6 +46,7 @@ public class GrupoTematicoService {
   private final ParticipanteGrupoRepository participanteGrupoRepository;
   private final FavoritoGrupoRepository favoritoGrupoRepository;
   private final DenunciarGrupoRepository denunciarGrupoRepository;
+  private final PedidoEntradaGrupoRepository pedidoEntradaGrupoRepository;
   private final EmailService emailService;
 
   @Transactional
@@ -140,9 +143,9 @@ public class GrupoTematicoService {
     return atualizado;
   }
 
-  // Entrar em um grupo
+  // Entrar em um grupo (ou solicitar entrada se privado)
   @Transactional
-  public void entrarNoGrupo(Long grupoId, Perfil perfilLogado) {
+  public String entrarNoGrupo(Long grupoId, Perfil perfilLogado) {
     log.info(
         "[GrupoTematicoService] entrarNoGrupo - Usuário {} tentando entrar no grupo {}",
         perfilLogado.getUsuario().getId(),
@@ -175,6 +178,27 @@ public class GrupoTematicoService {
       throw new RuntimeException("Você já é participante deste grupo.");
     }
 
+    // Grupo privado → cria pedido de entrada
+    if (grupo.isPrivado()) {
+      if (pedidoEntradaGrupoRepository.existsByGrupoIdAndUsuarioId(grupoId, usuario.getId())) {
+        log.warn(
+            "[GrupoTematicoService] entrarNoGrupo - Usuário {} já possui pedido pendente para o grupo {}",
+            usuario.getId(),
+            grupoId);
+        throw new RuntimeException(
+            "Você já possui um pedido de entrada pendente para este grupo.");
+      }
+      PedidoEntradaGrupo pedido =
+          PedidoEntradaGrupo.builder().grupo(grupo).usuario(usuario).build();
+      pedidoEntradaGrupoRepository.save(pedido);
+      log.info(
+          "[GrupoTematicoService] entrarNoGrupo - Pedido de entrada criado para usuário {} no grupo privado {}",
+          usuario.getId(),
+          grupoId);
+      return "Grupo privado: seu pedido de entrada foi enviado e aguarda aprovação da criadora.";
+    }
+
+    // Grupo público → entra diretamente
     int lotacaoMaxima = grupo.getNumeroParticipantes();
     int participantesAtuais = grupo.getParticipantes().size();
     log.info(
@@ -206,10 +230,127 @@ public class GrupoTematicoService {
         usuario.getNome(),
         grupoId);
 
-    String emailAdmin = grupo.getCriador().getEmail();
-    String nomeGrupo = grupo.getTitulo();
-    String nomeParticipante = usuario.getNome();
-    emailService.notificarNovoParticipante(emailAdmin, nomeGrupo, nomeParticipante);
+    emailService.notificarNovoParticipante(
+        grupo.getCriador().getEmail(), grupo.getTitulo(), usuario.getNome());
+
+    return "Você entrou no grupo com sucesso!";
+  }
+
+  // Listar pedidos de entrada pendentes de um grupo (somente criadora/moderadora)
+  public List<PedidoEntradaResponseDTO> listarPedidosPendentes(
+      Long grupoId, Perfil perfilLogado) {
+    log.info(
+        "[GrupoTematicoService] listarPedidosPendentes - Usuário {} listando pedidos do grupo {}",
+        perfilLogado.getUsuario().getId(),
+        grupoId);
+
+    ParticipanteGrupo executor =
+        participanteGrupoRepository
+            .findByGrupoIdAndUsuarioId(grupoId, perfilLogado.getUsuario().getId())
+            .orElseThrow(() -> new RuntimeException("Você não faz parte deste grupo."));
+
+    if (executor.getRole() != GrupoRole.CRIADORA && executor.getRole() != GrupoRole.MODERADORA) {
+      throw new RuntimeException(
+          "Ação negada: apenas a criadora ou moderadora podem ver os pedidos de entrada.");
+    }
+
+    List<PedidoEntradaResponseDTO> pedidos =
+        pedidoEntradaGrupoRepository
+            .findByGrupoIdAndStatus(grupoId, StatusPedidoEntrada.PENDENTE)
+            .stream()
+            .map(PedidoEntradaResponseDTO::new)
+            .toList();
+
+    log.info(
+        "[GrupoTematicoService] listarPedidosPendentes - {} pedido(s) pendente(s) no grupo {}",
+        pedidos.size(),
+        grupoId);
+    return pedidos;
+  }
+
+  // Aprovar ou rejeitar pedido de entrada (somente criadora/moderadora)
+  @Transactional
+  public PedidoEntradaResponseDTO responderPedido(
+      Long grupoId, Long pedidoId, boolean aprovado, Perfil perfilLogado) {
+    log.info(
+        "[GrupoTematicoService] responderPedido - Usuário {} {} pedido {} do grupo {}",
+        perfilLogado.getUsuario().getId(),
+        aprovado ? "aprovando" : "rejeitando",
+        pedidoId,
+        grupoId);
+
+    ParticipanteGrupo executor =
+        participanteGrupoRepository
+            .findByGrupoIdAndUsuarioId(grupoId, perfilLogado.getUsuario().getId())
+            .orElseThrow(() -> new RuntimeException("Você não faz parte deste grupo."));
+
+    if (executor.getRole() != GrupoRole.CRIADORA && executor.getRole() != GrupoRole.MODERADORA) {
+      throw new RuntimeException(
+          "Ação negada: apenas a criadora ou moderadora podem responder pedidos de entrada.");
+    }
+
+    PedidoEntradaGrupo pedido =
+        pedidoEntradaGrupoRepository
+            .findById(pedidoId)
+            .orElseThrow(() -> new RuntimeException("Pedido de entrada não encontrado."));
+
+    if (!pedido.getGrupo().getId().equals(grupoId)) {
+      throw new RuntimeException("Este pedido não pertence ao grupo informado.");
+    }
+
+    if (pedido.getStatus() != StatusPedidoEntrada.PENDENTE) {
+      throw new RuntimeException(
+          "Este pedido já foi respondido. Status atual: " + pedido.getStatus().name());
+    }
+
+    pedido.setStatus(aprovado ? StatusPedidoEntrada.APROVADO : StatusPedidoEntrada.REJEITADO);
+    pedido.setDataResposta(LocalDateTime.now());
+    pedidoEntradaGrupoRepository.save(pedido);
+
+    if (aprovado) {
+      GrupoTematico grupo = pedido.getGrupo();
+      int lotacaoMaxima = grupo.getNumeroParticipantes();
+      int participantesAtuais = grupo.getParticipantes().size();
+
+      if (participantesAtuais >= lotacaoMaxima) {
+        log.warn(
+            "[GrupoTematicoService] responderPedido - Grupo {} lotado ao tentar aprovar pedido {}",
+            grupoId,
+            pedidoId);
+        throw new RuntimeException(
+            "Não foi possível aprovar: grupo lotado ("
+                + participantesAtuais
+                + "/"
+                + lotacaoMaxima
+                + ").");
+      }
+
+      ParticipanteGrupo vinculo =
+          ParticipanteGrupo.builder()
+              .grupo(grupo)
+              .usuario(pedido.getUsuario())
+              .role(GrupoRole.PARTICIPANTE)
+              .dataAdesao(LocalDateTime.now())
+              .build();
+
+      participanteGrupoRepository.save(vinculo);
+      log.info(
+          "[GrupoTematicoService] responderPedido - Pedido {} aprovado. Usuário {} adicionado ao grupo {}",
+          pedidoId,
+          pedido.getUsuario().getId(),
+          grupoId);
+
+      emailService.notificarNovoParticipante(
+          grupo.getCriador().getEmail(), grupo.getTitulo(), pedido.getUsuario().getNome());
+    } else {
+      log.info(
+          "[GrupoTematicoService] responderPedido - Pedido {} rejeitado para usuário {} no grupo {}",
+          pedidoId,
+          pedido.getUsuario().getId(),
+          grupoId);
+    }
+
+    return new PedidoEntradaResponseDTO(pedido);
   }
 
   // Listar grupos que o usuário participa
@@ -340,11 +481,18 @@ public class GrupoTematicoService {
     boolean usuarioLogadoFavoritou =
         favoritoGrupoRepository.existsByGrupoIdAndUsuarioId(grupoId, usuarioLogadoId);
 
+    boolean aguardandoAprovacao =
+        pedidoEntradaGrupoRepository
+            .findByGrupoIdAndUsuarioId(grupoId, usuarioLogadoId)
+            .map(p -> p.getStatus() == StatusPedidoEntrada.PENDENTE)
+            .orElse(false);
+
     log.info(
-        "[GrupoTematicoService] obterDetalhes - Detalhes do grupo {} retornados. Participante: {}, Role: {}",
+        "[GrupoTematicoService] obterDetalhes - Detalhes do grupo {} retornados. Participante: {}, Role: {}, AguardandoAprovacao: {}",
         grupoId,
         isParticipante,
-        roleLogada);
+        roleLogada,
+        aguardandoAprovacao);
 
     return new DetalheGrupoResponseDTO(
         grupo.getId(),
@@ -362,7 +510,8 @@ public class GrupoTematicoService {
         participantes,
         isParticipante,
         roleLogada,
-        usuarioLogadoFavoritou);
+        usuarioLogadoFavoritou,
+        aguardandoAprovacao);
   }
 
   // Pesquisa global sem filtros
