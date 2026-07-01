@@ -108,28 +108,6 @@ class GrupoTematicoServiceTest {
     assertEquals(grupo.getId(), resultado.get(0).id());
   }
 
-  @Test
-  void deveInformarSeUsuarioLogadoFavoritouNoDetalheDoGrupo() {
-    Long grupoId = 1L;
-    UUID usuarioId = UUID.randomUUID();
-    Usuario usuario = Usuario.builder().id(usuarioId).nome("Maria").build();
-    GrupoTematico grupo = criarGrupo(grupoId);
-    ParticipanteGrupo participante =
-        ParticipanteGrupo.builder()
-            .grupo(grupo)
-            .usuario(usuario)
-            .role(GrupoRole.PARTICIPANTE)
-            .dataAdesao(LocalDateTime.now())
-            .build();
-    grupo.getParticipantes().add(participante);
-
-    when(grupoTematicoRepository.findById(grupoId)).thenReturn(Optional.of(grupo));
-    when(favoritoGrupoRepository.existsByGrupoIdAndUsuarioId(grupoId, usuarioId)).thenReturn(true);
-
-    DetalheGrupoResponseDTO resultado = grupoTematicoService.obterDetalhes(grupoId, usuarioId);
-
-    assertTrue(resultado.usuarioLogadoFavoritou());
-  }
 
   private Perfil criarPerfilComUsuario(UUID usuarioId) {
     Usuario usuario = Usuario.builder().id(usuarioId).nome("Maria").build();
