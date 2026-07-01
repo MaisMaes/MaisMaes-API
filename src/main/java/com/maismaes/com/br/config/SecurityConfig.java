@@ -78,7 +78,8 @@ public class SecurityConfig {
             "http://192.168.1.100:8081",
             "http://192.168.137.194:8081",
             "http://192.168.1.11:8081",
-            "http://192.168.1.11:8081"));
+            "http://192.168.1.11:8081",
+            "https://mais-mae-web.vercel.app"));
     corsConfiguration.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "PATCH"));
     corsConfiguration.setAllowedHeaders(List.of("Authorization", "Content-Type"));
     corsConfiguration.setAllowCredentials(true);
