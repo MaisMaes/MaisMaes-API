@@ -17,5 +17,8 @@ public interface PedidoEntradaGrupoRepository extends JpaRepository<PedidoEntrad
 
   // Verifica se já existe pedido de um usuário em um grupo
   boolean existsByGrupoIdAndUsuarioId(Long grupoId, UUID usuarioId);
+
+  // Deleta todos os pedidos de entrada de um usuário em um grupo
+  void deleteByGrupoIdAndUsuarioId(Long grupoId, UUID usuarioId);
 }
 

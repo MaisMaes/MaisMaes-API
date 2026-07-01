@@ -37,7 +37,7 @@ public class GrupoTematicoController {
       @RequestBody @Valid CriarGrupoTematicoRequestDTO grupoTematicoRequestDTO,
       @AuthenticationPrincipal Perfil perfilLogado) {
     // Passamos a entidade, a LISTA de bairros (Strings) e o perfil logado
-    var grupoCriado =
+    GrupoTematico grupoCriado =
         grupoTematicoService.criarGrupoTematico(
             grupoTematicoRequestDTO.ToGrupoTematicoEntity(),
             grupoTematicoRequestDTO.bairros(),
@@ -210,6 +210,17 @@ public class GrupoTematicoController {
     return ResponseEntity.noContent().build();
   }
 
+  @Operation(summary = "Remover participante de um grupo")
+  @DeleteMapping("/{grupoId}/participantes/{usuarioId}")
+  public ResponseEntity<String> removerParticipante(
+      @PathVariable Long grupoId,
+      @PathVariable UUID usuarioId,
+      @AuthenticationPrincipal Perfil perfilLogado) {
+
+    grupoTematicoService.removerParticipanteDoGrupo(grupoId, usuarioId, perfilLogado);
+    return ResponseEntity.ok("Participante removido do grupo com sucesso.");
+  }
+
   @Operation(summary = "Buscar Denuncias, aceita filtros")
   @GetMapping
   public ResponseEntity<Page<DenunciaGrupoResponseDTO>> buscarDenuncias(
@@ -232,4 +243,26 @@ public class GrupoTematicoController {
     // Retorna o DTO de resposta limpo que criamos na etapa anterior
     return ResponseEntity.ok(new DenunciaGrupoResponseDTO(denunciaAtualizada));
   }
+
+  @Operation(summary = "Sair de um grupo temático")
+  @DeleteMapping("/{id}/sair")
+  public ResponseEntity<String> sairDoGrupo(
+      @PathVariable Long id, @AuthenticationPrincipal Perfil perfilLogado) {
+    log.info(
+        "[REQUISIÇÃO] - Usuário {} tentando sair do grupo {}",
+        perfilLogado.getUsuario().getId(),
+        id);
+    try {
+      grupoTematicoService.sairDoGrupo(id, perfilLogado);
+      return ResponseEntity.ok("Você saiu do grupo com sucesso!");
+    } catch (RuntimeException e) {
+      log.warn(
+          "[REQUISIÇÃO] - Erro ao sair do grupo {}: {}",
+          id,
+          e.getMessage());
+      return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(e.getMessage());
+    }
+  }
+
 }
+

@@ -236,6 +236,30 @@ public class GrupoTematicoService {
     return "Você entrou no grupo com sucesso!";
   }
 
+  @Transactional
+  public void sairDoGrupo(Long grupoId, Perfil perfilLogado) {
+    UUID usuarioId = perfilLogado.getUsuario().getId();
+    log.info(
+        "[GrupoTematicoService] sairDoGrupo - Usuário {} tentando sair do grupo {}",
+        usuarioId,
+        grupoId);
+
+    ParticipanteGrupo participante =
+        participanteGrupoRepository
+            .findByGrupoIdAndUsuarioId(grupoId, usuarioId)
+            .orElseThrow(() -> new RuntimeException("Você não participa deste grupo."));
+
+    if (participante.getRole() == GrupoRole.CRIADORA) {
+      throw new RuntimeException("A criadora não pode sair do grupo. Exclua o grupo se desejar sair.");
+    }
+
+    participanteGrupoRepository.delete(participante);
+    log.info(
+        "[GrupoTematicoService] sairDoGrupo - Usuário {} saiu do grupo {} com sucesso",
+        usuarioId,
+        grupoId);
+  }
+
   // Listar pedidos de entrada pendentes de um grupo (somente criadora/moderadora)
   public List<PedidoEntradaResponseDTO> listarPedidosPendentes(
       Long grupoId, Perfil perfilLogado) {
@@ -361,7 +385,7 @@ public class GrupoTematicoService {
     List<ListarGrupoTematicoDTO> grupos =
         participanteGrupoRepository.findByUsuarioId(perfilLogado.getUsuario().getId()).stream()
             .map(ParticipanteGrupo::getGrupo)
-            .map(ListarGrupoTematicoDTO::new)
+            .map(g -> new ListarGrupoTematicoDTO(g, perfilLogado.getUsuario().getId()))
             .toList();
     log.info(
         "[GrupoTematicoService] listarGruposDoUsuario - {} grupo(s) encontrado(s) para o usuário {}",
@@ -431,7 +455,7 @@ public class GrupoTematicoService {
     List<ListarGrupoTematicoDTO> favoritos =
         favoritoGrupoRepository.findByUsuarioId(perfilLogado.getUsuario().getId()).stream()
             .map(FavoritoGrupo::getGrupo)
-            .map(ListarGrupoTematicoDTO::new)
+            .map(g -> new ListarGrupoTematicoDTO(g, perfilLogado.getUsuario().getId()))
             .toList();
     log.info(
         "[GrupoTematicoService] listarGruposFavoritos - {} favorito(s) encontrado(s) para o usuário {}",
@@ -464,6 +488,7 @@ public class GrupoTematicoService {
 
     List<ParticipanteGrupoResumoResponseDTO> participantes =
         grupo.getParticipantes().stream()
+            .filter(ParticipanteGrupo::isAtivo)
             .map(
                 p ->
                     new ParticipanteGrupoResumoResponseDTO(
@@ -472,6 +497,7 @@ public class GrupoTematicoService {
 
     var participanteLogado =
         grupo.getParticipantes().stream()
+            .filter(ParticipanteGrupo::isAtivo)
             .filter(p -> p.getUsuario().getId().equals(usuarioLogadoId))
             .findFirst();
 
@@ -574,6 +600,7 @@ public class GrupoTematicoService {
     MembroStatusResponseDTO status =
         participanteGrupoRepository
             .findByGrupoIdAndUsuarioId(grupoId, perfilLogado.getUsuario().getId())
+            .filter(ParticipanteGrupo::isAtivo)
             .map(p -> new MembroStatusResponseDTO(true, p.getRole().name()))
             .orElse(new MembroStatusResponseDTO(false, null));
     log.info(
@@ -727,6 +754,52 @@ public class GrupoTematicoService {
         motivo);
   }
 
+  @Transactional
+  public void removerParticipanteDoGrupo(
+      Long grupoId, UUID usuarioRemovidoId, Perfil perfilLogado) {
+    UUID executorId = perfilLogado.getUsuario().getId();
+    log.info(
+        "[GrupoTematicoService] removerParticipanteDoGrupo - Usuário {} tentando remover {} do grupo {}",
+        executorId,
+        usuarioRemovidoId,
+        grupoId);
+
+    ParticipanteGrupo executor =
+        participanteGrupoRepository
+            .findByGrupoIdAndUsuarioId(grupoId, executorId)
+            .orElseThrow(() -> new RuntimeException("Você não participa deste grupo."));
+
+    if (executor.getRole() == GrupoRole.PARTICIPANTE) {
+      throw new RuntimeException(
+          "Ação negada: apenas administradoras do grupo podem remover participantes.");
+    }
+
+    if (executorId.equals(usuarioRemovidoId)) {
+      throw new RuntimeException("Para sair do grupo, utilize o endpoint de saída do grupo.");
+    }
+
+    ParticipanteGrupo participante =
+        participanteGrupoRepository
+            .findByGrupoIdAndUsuarioId(grupoId, usuarioRemovidoId)
+            .orElseThrow(() -> new RuntimeException("Participante não encontrado no grupo."));
+
+    if (participante.getRole() == GrupoRole.CRIADORA) {
+      throw new RuntimeException("A criadora não pode ser removida do grupo.");
+    }
+
+    if (executor.getRole() == GrupoRole.MODERADORA && participante.getRole() == GrupoRole.MODERADORA) {
+      throw new RuntimeException("Moderadoras não podem remover outras moderadoras.");
+    }
+
+    participanteGrupoRepository.delete(participante);
+    pedidoEntradaGrupoRepository.deleteByGrupoIdAndUsuarioId(grupoId, usuarioRemovidoId);
+    log.info(
+        "[GrupoTematicoService] removerParticipanteDoGrupo - Usuário {} removido do grupo {} por {}",
+        usuarioRemovidoId,
+        grupoId,
+        executorId);
+  }
+
   public Page<DenunciaGrupoResponseDTO> listarDenuncias(
       DenunciaGrupoFilterDTO filtro, int pagina, int tamanho) {
     log.info(
@@ -745,54 +818,54 @@ public class GrupoTematicoService {
     return denuncias.map(DenunciaGrupoResponseDTO::new);
   }
 
-  @Transactional
-  public DenunciarGrupo atualizarParcial(Long id, AtualizarDenunciaDTO dto) {
-    log.info(
-        "[GrupoTematicoService] atualizarParcial - Atualizando denúncia ID: {}", id);
+   @Transactional
+   public DenunciarGrupo atualizarParcial(Long id, AtualizarDenunciaDTO dto) {
+     log.info(
+         "[GrupoTematicoService] atualizarParcial - Atualizando denúncia ID: {}", id);
 
-    DenunciarGrupo denuncia =
-        denunciarGrupoRepository
-            .findById(id)
-            .orElseThrow(() -> new RuntimeException("Denúncia não encontrada com o ID: " + id));
+     DenunciarGrupo denuncia =
+         denunciarGrupoRepository
+             .findById(id)
+             .orElseThrow(() -> new RuntimeException("Denúncia não encontrada com o ID: " + id));
 
-    if (dto.status() != null && !dto.status().isBlank()) {
-      try {
-        StatusDenuncia novoStatus = StatusDenuncia.valueOf(dto.status().trim().toUpperCase());
-        denuncia.setStatus(novoStatus);
-        log.info(
-            "[GrupoTematicoService] atualizarParcial - Status da denúncia {} atualizado para {}",
-            id,
-            novoStatus);
-      } catch (IllegalArgumentException e) {
-        log.warn(
-            "[GrupoTematicoService] atualizarParcial - Status inválido informado: '{}'",
-            dto.status());
-      }
-    }
+     if (dto.status() != null && !dto.status().isBlank()) {
+       try {
+         StatusDenuncia novoStatus = StatusDenuncia.valueOf(dto.status().trim().toUpperCase());
+         denuncia.setStatus(novoStatus);
+         log.info(
+             "[GrupoTematicoService] atualizarParcial - Status da denúncia {} atualizado para {}",
+             id,
+             novoStatus);
+       } catch (IllegalArgumentException e) {
+         log.warn(
+             "[GrupoTematicoService] atualizarParcial - Status inválido informado: '{}'",
+             dto.status());
+       }
+     }
 
-    if (dto.descricao() != null && !dto.descricao().isBlank()) {
-      denuncia.setDescricao(dto.descricao());
-    }
+     if (dto.descricao() != null && !dto.descricao().isBlank()) {
+       denuncia.setDescricao(dto.descricao());
+     }
 
-    if (dto.verdadeira() != null && !dto.verdadeira().isBlank()) {
-      try {
-        ConsistenciaDenuncia consistencia =
-            ConsistenciaDenuncia.valueOf(dto.verdadeira().trim().toUpperCase());
-        denuncia.setVerdadeira(consistencia);
-        log.info(
-            "[GrupoTematicoService] atualizarParcial - Consistência da denúncia {} atualizada para {}",
-            id,
-            consistencia);
-      } catch (IllegalArgumentException e) {
-        log.warn(
-            "[GrupoTematicoService] atualizarParcial - Consistência inválida informada: '{}'",
-            dto.verdadeira());
-      }
-    }
+     if (dto.verdadeira() != null && !dto.verdadeira().isBlank()) {
+       try {
+         ConsistenciaDenuncia consistencia =
+             ConsistenciaDenuncia.valueOf(dto.verdadeira().trim().toUpperCase());
+         denuncia.setVerdadeira(consistencia);
+         log.info(
+             "[GrupoTematicoService] atualizarParcial - Consistência da denúncia {} atualizada para {}",
+             id,
+             consistencia);
+       } catch (IllegalArgumentException e) {
+         log.warn(
+             "[GrupoTematicoService] atualizarParcial - Consistência inválida informada: '{}'",
+             dto.verdadeira());
+       }
+     }
 
-    DenunciarGrupo salva = denunciarGrupoRepository.save(denuncia);
-    log.info(
-        "[GrupoTematicoService] atualizarParcial - Denúncia {} atualizada com sucesso", id);
-    return salva;
-  }
+     DenunciarGrupo salva = denunciarGrupoRepository.save(denuncia);
+     log.info(
+         "[GrupoTematicoService] atualizarParcial - Denúncia {} atualizada com sucesso", id);
+     return salva;
+   }
 }

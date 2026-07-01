@@ -55,6 +55,7 @@ public class ParticipanteGrupo {
   @Column(name = "motivo_banimento", length = 80)
   private String motivoBanimento;
 
+
   @Column(nullable = false)
   @Builder.Default
   private boolean ativo = true;
