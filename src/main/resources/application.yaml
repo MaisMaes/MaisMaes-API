@@ -5,6 +5,9 @@ spring:
   application:
     name: maismaes
 
+  profiles:
+    active: ${SPRING_PROFILES_ACTIVE:dev}
+
   servlet:
     multipart:
       max-file-size: 10MB
@@ -18,7 +21,7 @@ spring:
 
   data:
     mongodb:
-      uri: mongodb://chatuser:chatpass@localhost:27017/chatdb?authSource=admin
+      uri: ${MONGODB_URI:mongodb://chatuser:chatpass@localhost:27017/chatdb?authSource=admin}
 
 
   jpa:
