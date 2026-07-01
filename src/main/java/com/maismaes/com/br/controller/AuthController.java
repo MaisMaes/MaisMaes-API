@@ -48,12 +48,18 @@ public class AuthController {
       description = "Envia um código de 6 dígitos para o e-mail informado, caso esteja cadastrado.")
   public ResponseEntity<Map<String, String>> recuperarSenha(
       @RequestBody @Valid RecuperarSenhaRequestDTO request) {
-    recuperacaoSenhaService.solicitarRecuperacao(request.email());
-    return ResponseEntity.status(HttpStatus.OK)
-        .body(
-            Map.of(
-                "mensagem",
-                "Se o e-mail informado estiver cadastrado, um código de recuperação será enviado."));
+    boolean sucessoEnvioCodigo = recuperacaoSenhaService.solicitarRecuperacao(request.email());
+    if (sucessoEnvioCodigo) {
+      return ResponseEntity.status(HttpStatus.OK)
+          .body(
+              Map.of(
+                  "mensagem", "Código de recuperação enviado, " + "cheque sua caixa de entrada"));
+    } else {
+      return ResponseEntity.status(HttpStatus.SERVICE_UNAVAILABLE)
+          .body(
+              Map.of(
+                  "mensagem", "Falha ao enviar código de recuperação, tente novamente mais tarde"));
+    }
   }
 
   @PostMapping("/redefinir-senha")

@@ -1,3 +1,6 @@
+server:
+  port: 8080
+
 spring:
   application:
     name: maismaes
@@ -31,26 +34,17 @@ security:
   secret: maismaes
 
 mail:
-  host: ${MAIL_HOST:smtp.gmail.com}
-  port: ${MAIL_PORT:587}
-  username: ${MAIL_USERNAME:seu-email@gmail.com}
-  password: ${MAIL_PASSWORD:sua-senha-de-app}
-  from: ${MAIL_FROM:nao-responda@maismaes.com.br}
-
-spring.mail:
-  host: ${MAIL_HOST:smtp.gmail.com}
-  port: ${MAIL_PORT:587}
-  username: ${MAIL_USERNAME:seu-email@gmail.com}
-  password: ${MAIL_PASSWORD:sua-senha-de-app}
-  properties:
-    mail:
-      smtp:
-        auth: true
-        starttls:
-          enable: true
+  api:
+    url: ${MAIL_API_URL:http://localhost:8088/v1/api-mensagens}
 
 recuperacao-senha:
   expiracao-minutos: 10
+
+admin:
+  email: ${ADMIN_EMAIL:alissongabriel010907@gmail.com}
+
+denuncia:
+  limiar-notificacao: ${DENUNCIA_LIMIAR_NOTIFICACAO:1}
 
 logging:
   level:

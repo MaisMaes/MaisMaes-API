@@ -94,4 +94,8 @@ public class GrupoTematico {
   @OneToMany(mappedBy = "grupo", cascade = CascadeType.ALL, orphanRemoval = true)
   @Builder.Default
   private List<Bairro> bairros = new ArrayList<>();
+
+  @OneToMany(mappedBy = "grupo", cascade = CascadeType.ALL, orphanRemoval = true)
+  @Builder.Default
+  private List<PedidoEntradaGrupo> pedidosEntrada = new ArrayList<>();
 }

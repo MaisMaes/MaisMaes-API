@@ -18,12 +18,13 @@ import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
+import org.hibernate.annotations.CreationTimestamp;
 
 @Table(
-    name = "participante_grupo",
+    name = "pedido_entrada_grupo",
     uniqueConstraints = {
       @UniqueConstraint(
-          columnNames = {"grupo_id", "usuario_id"}) // Garante a não repetição do usuario no grupo
+          columnNames = {"grupo_id", "usuario_id"}) // Um usuário só pode ter um pedido por grupo
     })
 @Entity
 @Getter
@@ -31,7 +32,8 @@ import lombok.Setter;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-public class ParticipanteGrupo {
+public class PedidoEntradaGrupo {
+
   @Id
   @GeneratedValue(strategy = GenerationType.IDENTITY)
   private Long id;
@@ -44,19 +46,16 @@ public class ParticipanteGrupo {
   @JoinColumn(name = "usuario_id", nullable = false)
   private Usuario usuario;
 
-  @Column(nullable = false)
-  private LocalDateTime dataAdesao;
-
   @Enumerated(EnumType.STRING)
   @Column(nullable = false)
-  @Builder.Default // precisa disso para não sobrescrever o valor padrão
-  private GrupoRole role = GrupoRole.PARTICIPANTE;
-
-  @Column(name = "motivo_banimento", length = 80)
-  private String motivoBanimento;
-
-
-  @Column(nullable = false)
   @Builder.Default
-  private boolean ativo = true;
+  private StatusPedidoEntrada status = StatusPedidoEntrada.PENDENTE;
+
+  @CreationTimestamp
+  @Column(name = "data_pedido", nullable = false, updatable = false)
+  private LocalDateTime dataPedido;
+
+  @Column(name = "data_resposta")
+  private LocalDateTime dataResposta;
 }
+

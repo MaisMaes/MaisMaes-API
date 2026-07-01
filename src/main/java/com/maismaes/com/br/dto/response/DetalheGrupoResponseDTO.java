@@ -18,4 +18,5 @@ public record DetalheGrupoResponseDTO(
     List<ParticipanteGrupoResumoResponseDTO> participantes,
     boolean usuarioLogadoEParticipante,
     String usuarioLogadoRole,
-    boolean usuarioLogadoFavoritou) {}
+    boolean usuarioLogadoFavoritou,
+    boolean usuarioLogadoAguardandoAprovacao) {}

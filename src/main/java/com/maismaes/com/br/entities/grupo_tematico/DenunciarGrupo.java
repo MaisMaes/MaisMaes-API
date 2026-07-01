@@ -6,7 +6,6 @@ import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;
 import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
@@ -18,9 +17,11 @@ import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
+import org.hibernate.annotations.CreationTimestamp;
+import org.hibernate.annotations.UpdateTimestamp;
 
 @Table(
-    name = "participante_grupo",
+    name = "denunciar_grupo",
     uniqueConstraints = {
       @UniqueConstraint(
           columnNames = {"grupo_id", "usuario_id"}) // Garante a não repetição do usuario no grupo
@@ -31,32 +32,35 @@ import lombok.Setter;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-public class ParticipanteGrupo {
-  @Id
-  @GeneratedValue(strategy = GenerationType.IDENTITY)
-  private Long id;
+public class DenunciarGrupo {
 
-  @ManyToOne
-  @JoinColumn(name = "grupo_id", nullable = false)
-  private GrupoTematico grupo;
+  @Id
+  @GeneratedValue(strategy = jakarta.persistence.GenerationType.IDENTITY)
+  private Long id;
 
   @ManyToOne
   @JoinColumn(name = "usuario_id", nullable = false)
   private Usuario usuario;
 
-  @Column(nullable = false)
-  private LocalDateTime dataAdesao;
+  @ManyToOne
+  @JoinColumn(name = "grupo_id", nullable = false)
+  private GrupoTematico grupo;
 
   @Enumerated(EnumType.STRING)
-  @Column(nullable = false)
-  @Builder.Default // precisa disso para não sobrescrever o valor padrão
-  private GrupoRole role = GrupoRole.PARTICIPANTE;
+  @Column
+  private StatusDenuncia status;
 
-  @Column(name = "motivo_banimento", length = 80)
-  private String motivoBanimento;
+  @Column private String descricao;
 
+  @CreationTimestamp
+  @Column(name = "data_denunciada", nullable = false, updatable = false)
+  private LocalDateTime dataDenunciada;
 
-  @Column(nullable = false)
-  @Builder.Default
-  private boolean ativo = true;
+  @UpdateTimestamp
+  @Column(name = "atualizado_em", nullable = false)
+  private LocalDateTime atualizadoEm;
+
+  @Enumerated(EnumType.STRING)
+  @Column(name = "verdadeira", length = 20)
+  private ConsistenciaDenuncia verdadeira = ConsistenciaDenuncia.VERIFICANDO;
 }

@@ -3,6 +3,7 @@ package com.maismaes.com.br.service;
 import com.maismaes.com.br.entities.Perfil;
 import com.maismaes.com.br.exception.CodigoRecuperacaoInvalidoException;
 import com.maismaes.com.br.repository.PerfilRepository;
+import jakarta.persistence.EntityNotFoundException;
 import java.security.SecureRandom;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
@@ -29,11 +30,10 @@ public class RecuperacaoSenhaService {
 
   private final Map<String, CodigoRecuperacao> codigos = new ConcurrentHashMap<>();
 
-  public void solicitarRecuperacao(String email) {
+  public boolean solicitarRecuperacao(String email) {
     Perfil perfil = perfilRepository.findByPerfilEmail(email);
-    // Por segurança, não revelamos se o e-mail existe ou não.
     if (perfil == null) {
-      return;
+      throw new EntityNotFoundException("Perfil não encontrado para o e-mail: " + email);
     }
 
     codigos.values().removeIf(reg -> reg.email().equalsIgnoreCase(email));
@@ -42,7 +42,7 @@ public class RecuperacaoSenhaService {
     Instant expiraEm = Instant.now().plus(expiracaoMinutos, ChronoUnit.MINUTES);
     codigos.put(codigo, new CodigoRecuperacao(email, expiraEm));
 
-    emailService.enviarCodigoRecuperacao(email, codigo);
+    return emailService.enviarCodigoRecuperacao(email, codigo);
   }
 
   public void redefinirSenha(String codigo, String novaSenha) {
