@@ -10,6 +10,7 @@ import com.maismaes.com.br.dto.response.MembroStatusResponseDTO;
 import com.maismaes.com.br.dto.response.ParticipanteGrupoResumoResponseDTO;
 import com.maismaes.com.br.dto.response.PedidoEntradaResponseDTO;
 import com.maismaes.com.br.entities.Perfil;
+import com.maismaes.com.br.entities.Role;
 import com.maismaes.com.br.entities.Usuario;
 import com.maismaes.com.br.entities.grupo_tematico.*;
 import com.maismaes.com.br.repository.DenunciarGrupoRepository;
@@ -620,18 +621,26 @@ public class GrupoTematicoService {
         perfilLogado.getUsuario().getNome(),
         grupoId);
 
-    ParticipanteGrupo executor =
-        participanteGrupoRepository
-            .findByGrupoIdAndUsuarioId(grupoId, perfilLogado.getUsuario().getId())
-            .orElseThrow(
-                () -> new RuntimeException("Você não tem permissão para acessar este grupo."));
+    boolean isAdministrador = perfilLogado.getRole() == Role.ADMINISTRADOR;
 
-    if (executor.getRole() != GrupoRole.CRIADORA) {
-      log.warn(
-          "[GrupoTematicoService] excluirGrupo - Usuário {} sem permissão para excluir grupo {}",
-          perfilLogado.getUsuario().getNome(),
-          grupoId);
-      throw new RuntimeException("Ação negada: Apenas a criadora original pode excluir o grupo.");
+    // Administrador pode excluir sem ser participante
+    if (!isAdministrador) {
+      ParticipanteGrupo executor =
+          participanteGrupoRepository
+              .findByGrupoIdAndUsuarioId(grupoId, perfilLogado.getUsuario().getId())
+              .orElseThrow(
+                  () ->
+                      new RuntimeException(
+                          "Ação negada: Apenas a criadora original ou um administrador pode excluir o grupo."));
+
+      if (executor.getRole() != GrupoRole.CRIADORA) {
+        log.warn(
+            "[GrupoTematicoService] excluirGrupo - Usuário {} sem permissão para excluir grupo {}",
+            perfilLogado.getUsuario().getNome(),
+            grupoId);
+        throw new RuntimeException(
+            "Ação negada: Apenas a criadora original ou um administrador pode excluir o grupo.");
+      }
     }
 
     GrupoTematico grupo =
