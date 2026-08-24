@@ -4,6 +4,7 @@ import com.maismaes.com.br.dto.request.AtualizaDadosContaDTO;
 import com.maismaes.com.br.dto.request.BuscaDadosContaResponseDTO;
 import com.maismaes.com.br.dto.request.DeletaContaDTO;
 import com.maismaes.com.br.entities.Perfil;
+import com.maismaes.com.br.entities.PerfilStatus;
 import com.maismaes.com.br.entities.Role;
 import com.maismaes.com.br.entities.Usuario;
 import com.maismaes.com.br.exception.SenhaException;
@@ -25,13 +26,28 @@ public class UsuarioService {
   private final UsuarioRepository usuarioRepository;
   private final UserValidationUtils userValidationUtils;
   private final PerfilRepository perfilRepository;
+  private final EmailService emailService;
   private final BCryptPasswordEncoder bCryptPasswordEncoder;
 
   public Usuario cadastrarUsuario(Usuario usuario) {
     userValidationUtils.verificarUnicidade(
         usuario.getEmail(), usuario.getTelefone(), usuario.getId());
-    return usuarioRepository.save(usuario);
+
+    var novoUsuario = usuarioRepository.save(usuario);
+    emailService.enviarEmailDeAtivacao(novoUsuario.getPerfil().getPerfilEmail(), novoUsuario.getId());
+
+    return novoUsuario;
   }
+
+    public Usuario ativarConta(UUID  idUsuario) {
+        Usuario usuario = usuarioRepository.findById(idUsuario)
+            .orElseThrow(UsuarioNaoEncontradoException::new);
+
+        usuario.getPerfil().setStatus(PerfilStatus.ATIVADO);
+        usuarioRepository.save(usuario);
+
+        return usuario;
+    }
 
   public BuscaDadosContaResponseDTO buscarDadosConta(String user_email) {
     Usuario usuario =

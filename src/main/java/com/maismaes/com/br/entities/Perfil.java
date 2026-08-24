@@ -22,6 +22,10 @@ public class Perfil implements UserDetails {
   @GeneratedValue(strategy = GenerationType.UUID)
   private UUID id;
 
+  @Column(nullable = false)
+  @Enumerated(EnumType.STRING)
+  private PerfilStatus status = PerfilStatus.DESATIVADO;
+
   @Column(nullable = false, unique = true)
   private String perfilEmail;
 

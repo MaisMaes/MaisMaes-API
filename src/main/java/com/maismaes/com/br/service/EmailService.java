@@ -2,6 +2,8 @@ package com.maismaes.com.br.service;
 
 import jakarta.annotation.PostConstruct;
 import java.util.Map;
+import java.util.UUID;
+
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
@@ -107,4 +109,30 @@ public class EmailService {
       return false;
     }
   }
+
+    public boolean enviarEmailDeAtivacao(String email, UUID idUsuario) {
+        log.info(
+                "[REQUISIÇÃO][EmailService] - Solicitando disparo de email para ativação de conta para o email: {}",
+                email);
+        try {
+            restClient
+                    .post()
+                    .uri("/ativacao-conta")
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .body(Map.of("email", email, "idUsuario", idUsuario))
+                    .retrieve()
+                    .toBodilessEntity();
+            log.info(
+                    "[REQUISIÇÃO][EmailService] - Email de ativação de conta enviado com sucesso para: {}",
+                    email);
+            return true;
+        } catch (Exception ex) {
+            log.error(
+                    "[REQUISIÇÃO][EmailService] - Falha ao enviar email de ativação de conta para: {}",
+                    email,
+                    ex);
+            return false;
+        }
+    }
+
 }

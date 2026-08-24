@@ -1,5 +1,6 @@
 package com.maismaes.com.br.controller;
 
+import com.maismaes.com.br.dto.AtivacaoContaRequestDTO;
 import com.maismaes.com.br.dto.request.AtualizaDadosContaDTO;
 import com.maismaes.com.br.dto.request.BuscaDadosContaResponseDTO;
 import com.maismaes.com.br.dto.request.CadastroUsuarioRequestDTO;
@@ -34,7 +35,6 @@ public class UsuarioController {
 
   private final BCryptPasswordEncoder bCryptPasswordEncoder;
   private final UsuarioService usuarioService;
-  private final TokenService tokenService;
 
   @PostMapping("/cadastro")
   @Operation(summary = "Registra usuário", description = "Este endpoint cria um novo usuário")
@@ -43,14 +43,29 @@ public class UsuarioController {
     log.info("[REQUISIÇÃO] - Chegando requisição de cadastro de usuário");
     var senhaEncriptada = bCryptPasswordEncoder.encode(cadastroUsuarioRequestDTO.senha());
 
-    var novoUsuario =
+    try{
         usuarioService.cadastrarUsuario(cadastroUsuarioRequestDTO.toUsuarioEntity(senhaEncriptada));
-
-    var token = tokenService.generateToken(novoUsuario.getPerfil());
-    var response = new CadastroUsuarioResponseDTO(token);
-
-    return ResponseEntity.status(HttpStatus.CREATED).body(response);
+        return ResponseEntity.status(HttpStatus.OK).build();
+    }catch(Exception e){
+        log.error("[REQUISIÇÃO] - Erro ao cadastrar usuário: {}", e.getMessage());
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST).build();
+    }
   }
+
+    @PostMapping("/ativar-conta")
+    @Operation(summary = "Ativa conta do usuário", description = "Este endpoint ativa a conta de um usuário")
+    public ResponseEntity<Void> ativarConta(
+            @RequestBody @Valid AtivacaoContaRequestDTO ativacaoContaRequestDTO) {
+        log.info("[REQUISIÇÃO] - Chegando requisição de ativação de conta");
+
+        try{
+            usuarioService.ativarConta(ativacaoContaRequestDTO.idUsuario());
+            return ResponseEntity.status(HttpStatus.OK).build();
+        }catch(Exception e){
+            log.error("[REQUISIÇÃO] - Erro ao ativar conta: {}", e.getMessage());
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).build();
+        }
+    }
 
   @GetMapping("/me")
   @Operation(
@@ -86,7 +101,6 @@ public class UsuarioController {
     return ResponseEntity.ok("Conta excluída com sucesso");
   }
 
-  // metodo temporario para promover uma conta a adm
   @PatchMapping("/{id}/promover-admin")
   public ResponseEntity<Void> promoverAdmin(@PathVariable UUID id) {
 
@@ -94,4 +108,6 @@ public class UsuarioController {
 
     return ResponseEntity.noContent().build();
   }
+
+
 }
