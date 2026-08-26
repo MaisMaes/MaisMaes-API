@@ -5,6 +5,7 @@ import com.maismaes.com.br.dto.request.RecuperarSenhaRequestDTO;
 import com.maismaes.com.br.dto.request.RedefinirSenhaRequestDTO;
 import com.maismaes.com.br.dto.response.AuthResponseDTO;
 import com.maismaes.com.br.entities.Perfil;
+import com.maismaes.com.br.entities.PerfilStatus;
 import com.maismaes.com.br.service.RecuperacaoSenhaService;
 import com.maismaes.com.br.service.TokenService;
 import io.swagger.v3.oas.annotations.Operation;
@@ -15,6 +16,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -36,9 +38,19 @@ public class AuthController {
   public ResponseEntity<AuthResponseDTO> login(@RequestBody AuthRequestDTO login) {
     var usernamePassword = new UsernamePasswordAuthenticationToken(login.email(), login.senha());
     var auth = this.authenticationManager.authenticate(usernamePassword);
-    var token = tokenService.generateToken((Perfil) auth.getPrincipal());
 
-    var response = new AuthResponseDTO(token);
+    Perfil perfil = (Perfil) auth.getPrincipal();
+
+    if(perfil.getStatus().equals(PerfilStatus.DESATIVADO)) {
+        var response = new AuthResponseDTO(null, perfil.getStatus().name());
+        return ResponseEntity.status(HttpStatus.FORBIDDEN).body(response);
+    } else if (perfil.getStatus().equals(PerfilStatus.BANIDO)) {
+        var response = new AuthResponseDTO(null, perfil.getStatus().name());
+        return ResponseEntity.status(HttpStatus.FORBIDDEN).body(response);
+    }
+
+    var token = tokenService.generateToken(perfil);
+    var response = new AuthResponseDTO(token, perfil.getStatus().name());
     return ResponseEntity.status(HttpStatus.OK).body(response);
   }
 

@@ -39,7 +39,7 @@ public class UsuarioController {
   @PostMapping("/cadastro")
   @Operation(summary = "Registra usuário", description = "Este endpoint cria um novo usuário")
   public ResponseEntity<CadastroUsuarioResponseDTO> cadastrarUsuario(
-      @RequestBody @Valid CadastroUsuarioRequestDTO cadastroUsuarioRequestDTO) {
+          @RequestBody @Valid CadastroUsuarioRequestDTO cadastroUsuarioRequestDTO) {
     log.info("[REQUISIÇÃO] - Chegando requisição de cadastro de usuário");
     var senhaEncriptada = bCryptPasswordEncoder.encode(cadastroUsuarioRequestDTO.senha());
 
@@ -52,14 +52,14 @@ public class UsuarioController {
     }
   }
 
-    @PostMapping("/ativar-conta")
+    @GetMapping("/ativar-conta/{idUsuario}")
     @Operation(summary = "Ativa conta do usuário", description = "Este endpoint ativa a conta de um usuário")
     public ResponseEntity<Void> ativarConta(
-            @RequestBody @Valid AtivacaoContaRequestDTO ativacaoContaRequestDTO) {
+            @PathVariable UUID idUsuario) {
         log.info("[REQUISIÇÃO] - Chegando requisição de ativação de conta");
 
         try{
-            usuarioService.ativarConta(ativacaoContaRequestDTO.idUsuario());
+            usuarioService.ativarConta(idUsuario);
             return ResponseEntity.status(HttpStatus.OK).build();
         }catch(Exception e){
             log.error("[REQUISIÇÃO] - Erro ao ativar conta: {}", e.getMessage());

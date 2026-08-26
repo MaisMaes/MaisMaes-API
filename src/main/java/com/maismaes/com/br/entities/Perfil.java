@@ -22,7 +22,7 @@ public class Perfil implements UserDetails {
   @GeneratedValue(strategy = GenerationType.UUID)
   private UUID id;
 
-  @Column(nullable = false)
+  @Column(name = "status", nullable = false)
   @Enumerated(EnumType.STRING)
   private PerfilStatus status = PerfilStatus.DESATIVADO;
 
