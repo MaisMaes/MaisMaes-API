@@ -3,6 +3,8 @@ package com.maismaes.com.br.service;
 import com.maismaes.com.br.dto.request.AtualizaDadosContaDTO;
 import com.maismaes.com.br.dto.request.BuscaDadosContaResponseDTO;
 import com.maismaes.com.br.dto.request.DeletaContaDTO;
+import com.maismaes.com.br.dto.response.DadosPerfilResponseDTo;
+import com.maismaes.com.br.dto.response.DadosUsuariosDto;
 import com.maismaes.com.br.entities.Perfil;
 import com.maismaes.com.br.entities.PerfilStatus;
 import com.maismaes.com.br.entities.Role;
@@ -13,9 +15,12 @@ import com.maismaes.com.br.repository.PerfilRepository;
 import com.maismaes.com.br.repository.UsuarioRepository;
 import com.maismaes.com.br.utils.UserValidationUtils;
 import jakarta.transaction.Transactional;
+
+import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
+import org.apache.catalina.User;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
 
@@ -33,6 +38,7 @@ public class UsuarioService {
     userValidationUtils.verificarUnicidade(
         usuario.getEmail(), usuario.getTelefone(), usuario.getId());
 
+
     var novoUsuario = usuarioRepository.save(usuario);
     emailService.enviarEmailDeAtivacao(novoUsuario.getPerfil().getPerfilEmail(), novoUsuario.getId());
 
@@ -48,6 +54,38 @@ public class UsuarioService {
 
         return usuario;
     }
+
+  public List<DadosUsuariosDto> buscaInfoUsuarios() {
+
+    List<Usuario> users = usuarioRepository.findAll();
+
+    return users.stream()
+            .map(usuario -> new DadosUsuariosDto(
+                    usuario.getId(),
+                    usuario.getNome(),
+                    usuario.getEmail(),
+                    usuario.getTelefone(),
+                    usuario.getPerfil().getStatus(),
+                    usuario.getPerfil().getRole()
+            ))
+            .toList();
+  }
+
+  public DadosPerfilResponseDTo buscarDadosPerfil(UUID idUsuario){
+    Usuario user = usuarioRepository.findById(idUsuario).orElseThrow(UsuarioNaoEncontradoException::new);
+
+    return new DadosPerfilResponseDTo(user.getPerfil());
+  }
+
+  public DadosPerfilResponseDTo mudarStatusConta(UUID idUsuario, PerfilStatus novoStatus){
+        String mensagemRetorno = "Status atualizado";
+        Usuario user = usuarioRepository.findById(idUsuario).orElseThrow(UsuarioNaoEncontradoException::new);
+        user.getPerfil().setStatus(novoStatus);
+        usuarioRepository.save(user);
+
+       return new DadosPerfilResponseDTo(user.getPerfil());
+    }
+
 
   public BuscaDadosContaResponseDTO buscarDadosConta(String user_email) {
     Usuario usuario =
