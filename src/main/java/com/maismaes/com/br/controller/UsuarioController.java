@@ -6,11 +6,16 @@ import com.maismaes.com.br.dto.request.BuscaDadosContaResponseDTO;
 import com.maismaes.com.br.dto.request.CadastroUsuarioRequestDTO;
 import com.maismaes.com.br.dto.request.DeletaContaDTO;
 import com.maismaes.com.br.dto.response.CadastroUsuarioResponseDTO;
+import com.maismaes.com.br.dto.response.DadosPerfilResponseDTo;
+import com.maismaes.com.br.dto.response.DadosUsuariosDto;
 import com.maismaes.com.br.entities.Perfil;
+import com.maismaes.com.br.entities.PerfilStatus;
 import com.maismaes.com.br.service.TokenService;
 import com.maismaes.com.br.service.UsuarioService;
 import io.swagger.v3.oas.annotations.Operation;
 import jakarta.validation.Valid;
+
+import java.util.List;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -66,6 +71,39 @@ public class UsuarioController {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).build();
         }
     }
+
+    @PatchMapping("/status-conta")
+    @Operation(
+            summary = "Muda status de conta do usuario",
+            description =
+                    "Este endpoint muda o status da conta do usuario,podendo ser DESATIVADO, BANIDO ,ATIVADO  ")
+    public ResponseEntity<DadosPerfilResponseDTo> mudarStatus(UUID userId, PerfilStatus novoStatus){
+        DadosPerfilResponseDTo perfilDados =  usuarioService.mudarStatusConta(userId,novoStatus);
+     return ResponseEntity.status(HttpStatus.OK).body(perfilDados);
+    }
+
+    @GetMapping("/perfil")
+    @Operation(
+            summary = "Trás informações de perfil do usuario",
+            description =
+                    "Este endpoint retorna informações da parte de perfil do usuario")
+    public ResponseEntity<DadosPerfilResponseDTo> buscarPerfil(UUID id){ DadosPerfilResponseDTo perfilDados = usuarioService.buscarDadosPerfil(id);
+      return ResponseEntity.status(HttpStatus.OK).body(perfilDados);
+    }
+
+    @GetMapping("/contas")
+    @Operation(
+            summary = "Trás todos os dados de conta e perfil de todos os usuarios",
+            description =
+                    "Trás todos os dados de conta e perfil de todos os usuarios")
+    public ResponseEntity<List<DadosUsuariosDto>> buscarUsuarios() {
+
+        List<DadosUsuariosDto> usuarios =
+                usuarioService.buscaInfoUsuarios();
+
+        return ResponseEntity.ok(usuarios);
+    }
+
 
   @GetMapping("/me")
   @Operation(
