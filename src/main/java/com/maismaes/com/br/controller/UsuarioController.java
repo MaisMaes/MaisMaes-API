@@ -1,15 +1,21 @@
 package com.maismaes.com.br.controller;
 
+import com.maismaes.com.br.dto.AtivacaoContaRequestDTO;
 import com.maismaes.com.br.dto.request.AtualizaDadosContaDTO;
 import com.maismaes.com.br.dto.request.BuscaDadosContaResponseDTO;
 import com.maismaes.com.br.dto.request.CadastroUsuarioRequestDTO;
 import com.maismaes.com.br.dto.request.DeletaContaDTO;
 import com.maismaes.com.br.dto.response.CadastroUsuarioResponseDTO;
+import com.maismaes.com.br.dto.response.DadosPerfilResponseDTo;
+import com.maismaes.com.br.dto.response.DadosUsuariosDto;
 import com.maismaes.com.br.entities.Perfil;
+import com.maismaes.com.br.entities.PerfilStatus;
 import com.maismaes.com.br.service.TokenService;
 import com.maismaes.com.br.service.UsuarioService;
 import io.swagger.v3.oas.annotations.Operation;
 import jakarta.validation.Valid;
+
+import java.util.List;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -34,23 +40,70 @@ public class UsuarioController {
 
   private final BCryptPasswordEncoder bCryptPasswordEncoder;
   private final UsuarioService usuarioService;
-  private final TokenService tokenService;
 
   @PostMapping("/cadastro")
   @Operation(summary = "Registra usuário", description = "Este endpoint cria um novo usuário")
   public ResponseEntity<CadastroUsuarioResponseDTO> cadastrarUsuario(
-      @RequestBody @Valid CadastroUsuarioRequestDTO cadastroUsuarioRequestDTO) {
+          @RequestBody @Valid CadastroUsuarioRequestDTO cadastroUsuarioRequestDTO) {
     log.info("[REQUISIÇÃO] - Chegando requisição de cadastro de usuário");
     var senhaEncriptada = bCryptPasswordEncoder.encode(cadastroUsuarioRequestDTO.senha());
 
-    var novoUsuario =
+    try{
         usuarioService.cadastrarUsuario(cadastroUsuarioRequestDTO.toUsuarioEntity(senhaEncriptada));
-
-    var token = tokenService.generateToken(novoUsuario.getPerfil());
-    var response = new CadastroUsuarioResponseDTO(token);
-
-    return ResponseEntity.status(HttpStatus.CREATED).body(response);
+        return ResponseEntity.status(HttpStatus.OK).build();
+    }catch(Exception e){
+        log.error("[REQUISIÇÃO] - Erro ao cadastrar usuário: {}", e.getMessage());
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST).build();
+    }
   }
+
+    @GetMapping("/ativar-conta/{idUsuario}")
+    @Operation(summary = "Ativa conta do usuário", description = "Este endpoint ativa a conta de um usuário")
+    public ResponseEntity<Void> ativarConta(
+            @PathVariable UUID idUsuario) {
+        log.info("[REQUISIÇÃO] - Chegando requisição de ativação de conta");
+
+        try{
+            usuarioService.ativarConta(idUsuario);
+            return ResponseEntity.status(HttpStatus.OK).build();
+        }catch(Exception e){
+            log.error("[REQUISIÇÃO] - Erro ao ativar conta: {}", e.getMessage());
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).build();
+        }
+    }
+
+    @PatchMapping("/status-conta")
+    @Operation(
+            summary = "Muda status de conta do usuario",
+            description =
+                    "Este endpoint muda o status da conta do usuario,podendo ser DESATIVADO, BANIDO ,ATIVADO  ")
+    public ResponseEntity<DadosPerfilResponseDTo> mudarStatus(UUID userId, PerfilStatus novoStatus){
+        DadosPerfilResponseDTo perfilDados =  usuarioService.mudarStatusConta(userId,novoStatus);
+     return ResponseEntity.status(HttpStatus.OK).body(perfilDados);
+    }
+
+    @GetMapping("/perfil")
+    @Operation(
+            summary = "Trás informações de perfil do usuario",
+            description =
+                    "Este endpoint retorna informações da parte de perfil do usuario")
+    public ResponseEntity<DadosPerfilResponseDTo> buscarPerfil(UUID id){ DadosPerfilResponseDTo perfilDados = usuarioService.buscarDadosPerfil(id);
+      return ResponseEntity.status(HttpStatus.OK).body(perfilDados);
+    }
+
+    @GetMapping("/contas")
+    @Operation(
+            summary = "Trás todos os dados de conta e perfil de todos os usuarios",
+            description =
+                    "Trás todos os dados de conta e perfil de todos os usuarios")
+    public ResponseEntity<List<DadosUsuariosDto>> buscarUsuarios() {
+
+        List<DadosUsuariosDto> usuarios =
+                usuarioService.buscaInfoUsuarios();
+
+        return ResponseEntity.ok(usuarios);
+    }
+
 
   @GetMapping("/me")
   @Operation(
@@ -86,7 +139,6 @@ public class UsuarioController {
     return ResponseEntity.ok("Conta excluída com sucesso");
   }
 
-  // metodo temporario para promover uma conta a adm
   @PatchMapping("/{id}/promover-admin")
   public ResponseEntity<Void> promoverAdmin(@PathVariable UUID id) {
 
@@ -94,4 +146,6 @@ public class UsuarioController {
 
     return ResponseEntity.noContent().build();
   }
+
+
 }
