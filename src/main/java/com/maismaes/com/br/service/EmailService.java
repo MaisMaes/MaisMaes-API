@@ -1,52 +1,41 @@
 package com.maismaes.com.br.service;
 
-import jakarta.annotation.PostConstruct;
 import java.util.Map;
 import java.util.UUID;
 
+import com.maismaes.com.br.kafka.KafkaProducerEmailService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.http.MediaType;
 import org.springframework.stereotype.Service;
-import org.springframework.web.client.RestClient;
 
 @Slf4j
 @Service
 @RequiredArgsConstructor
 public class EmailService {
 
-  @Value("${mail.api.url:http://localhost:8088/api/mensagens}")
-  private String URL_API_MENSAGENS;
-
-  private RestClient restClient;
-
-  @PostConstruct
-  public void init() {
-    this.restClient = RestClient.create(URL_API_MENSAGENS);
-  }
+  private final KafkaProducerEmailService kafkaProducerMailService;
 
   @Value("${mail.from:nao-responda@maismaes.com.br}")
   private String from;
 
   public boolean enviarCodigoRecuperacao(String destinatario, String codigo) {
     log.info(
-        "[REQUISIÇÃO][EmailService] - Solicitando envio de código de recuperação de senha para API mensagens");
+        "[KAFKA][EmailService] - Publicando mensagem de recuperação de senha para o tópico 'email'");
     try {
-      restClient
-          .post()
-          .uri("/recuperar-senha")
-          .contentType(MediaType.APPLICATION_JSON)
-          .body(Map.of("email", destinatario, "codigo", codigo))
-          .retrieve()
-          .toBodilessEntity();
+      Map<String, String> payload = Map.of(
+          "email", destinatario,
+          "codigo", codigo,
+          "tipo", "recuperar-senha",
+          "strategy", "recuperar-senha");
+      kafkaProducerMailService.sendMessage(payload);
       log.info(
-          "[REQUISIÇÃO][EmailService] - Código de recuperação de senha enviado com sucesso para: {}",
+          "[KAFKA][EmailService] - Código de recuperação de senha publicado com sucesso para: {}",
           destinatario);
       return true;
     } catch (Exception ex) {
       log.error(
-          "[REQUISIÇÃO][EmailService] - Falha ao enviar código de recuperação de senha para: {}",
+          "[KAFKA][EmailService] - Falha ao publicar código de recuperação de senha para: {}",
           destinatario,
           ex);
       return false;
@@ -56,24 +45,24 @@ public class EmailService {
   public boolean notificarNovoParticipante(
       String email, String nomeGrupo, String nomeParticipante) {
     log.info(
-        "[REQUISIÇÃO][EmailService] - Solicitando notificação de novo participante no grupo '{}' para: {}",
+        "[KAFKA][EmailService] - Publicando notificação de novo participante no grupo '{}' para: {}",
         nomeGrupo,
         email);
     try {
-      restClient
-          .post()
-          .uri("/notificacao-novo-participante-grupo")
-          .contentType(MediaType.APPLICATION_JSON)
-          .body(Map.of("email", email, "nomeGrupo", nomeGrupo, "nomeParticipante", nomeParticipante))
-          .retrieve()
-          .toBodilessEntity();
+      Map<String, String> payload = Map.of(
+          "email", email,
+          "nomeGrupo", nomeGrupo,
+          "nomeParticipante", nomeParticipante,
+          "tipo", "notificacao-novo-participante-grupo",
+          "strategy", "novo-participante");
+      kafkaProducerMailService.sendMessage(payload);
       log.info(
-          "[REQUISIÇÃO][EmailService] - Notificação de novo participante enviada com sucesso para: {}",
+          "[KAFKA][EmailService] - Notificação de novo participante publicada com sucesso para: {}",
           email);
       return true;
     } catch (Exception ex) {
       log.error(
-          "[REQUISIÇÃO][EmailService] - Falha ao notificar administrador do grupo '{}' ({}): {}",
+          "[KAFKA][EmailService] - Falha ao publicar notificação de novo participante no grupo '{}' ({}): {}",
           nomeGrupo,
           email,
           ex.getMessage());
@@ -83,26 +72,26 @@ public class EmailService {
 
   public boolean notificarDenunciaGrupo(String email, String nomeGrupo, long qtdeDenuncias) {
     log.info(
-        "[REQUISIÇÃO][EmailService] - Solicitando notificação de denúncias do grupo '{}' para admin: {}. Total PENDENTE: {}",
+        "[KAFKA][EmailService] - Publicando notificação de denúncias do grupo '{}' para admin: {}. Total PENDENTE: {}",
         nomeGrupo,
         email,
         qtdeDenuncias);
     try {
-      restClient
-          .post()
-          .uri("/notificacao-denuncia-grupo")
-          .contentType(MediaType.APPLICATION_JSON)
-          .body(Map.of("email", email, "nomeGrupo", nomeGrupo, "qtdeDenuncias", qtdeDenuncias))
-          .retrieve()
-          .toBodilessEntity();
+      Map<String, String> payload = Map.of(
+          "email", email,
+          "nomeGrupo", nomeGrupo,
+          "qtdeDenuncias", String.valueOf(qtdeDenuncias),
+          "tipo", "notificacao-denuncia-grupo",
+          "strategy", "denuncia-grupo");
+      kafkaProducerMailService.sendMessage(payload);
       log.info(
-          "[REQUISIÇÃO][EmailService] - Notificação de denúncia do grupo '{}' enviada com sucesso para: {}",
+          "[KAFKA][EmailService] - Notificação de denúncia do grupo '{}' publicada com sucesso para: {}",
           nomeGrupo,
           email);
       return true;
     } catch (Exception ex) {
       log.error(
-          "[REQUISIÇÃO][EmailService] - Falha ao notificar admin sobre denúncias do grupo '{}' ({}): {}",
+          "[KAFKA][EmailService] - Falha ao publicar notificação de denúncias do grupo '{}' ({}): {}",
           nomeGrupo,
           email,
           ex.getMessage());
@@ -110,29 +99,26 @@ public class EmailService {
     }
   }
 
-    public boolean enviarEmailDeAtivacao(String email, UUID idUsuario) {
-        log.info(
-                "[REQUISIÇÃO][EmailService] - Solicitando disparo de email para ativação de conta para o email: {}",
-                email);
-        try {
-            restClient
-                    .post()
-                    .uri("/ativacao-conta")
-                    .contentType(MediaType.APPLICATION_JSON)
-                    .body(Map.of("email", email, "idUsuario", idUsuario))
-                    .retrieve()
-                    .toBodilessEntity();
-            log.info(
-                    "[REQUISIÇÃO][EmailService] - Email de ativação de conta enviado com sucesso para: {}",
-                    email);
-            return true;
-        } catch (Exception ex) {
-            log.error(
-                    "[REQUISIÇÃO][EmailService] - Falha ao enviar email de ativação de conta para: {}",
-                    email,
-                    ex);
-            return false;
-        }
+  public boolean enviarEmailDeAtivacao(String email, UUID idUsuario) {
+    log.info(
+        "[KAFKA][EmailService] - Publicando mensagem de ativação de conta para o tópico 'email'");
+    try {
+      Map<String, String> payload = Map.of(
+          "email", email,
+          "idUsuario", idUsuario.toString(),
+          "tipo", "ativacao-conta",
+          "strategy", "ativar-conta");
+      kafkaProducerMailService.sendMessage(payload);
+      log.info(
+          "[KAFKA][EmailService] - Email de ativação de conta publicado com sucesso para: {}",
+          email);
+      return true;
+    } catch (Exception ex) {
+      log.error(
+          "[KAFKA][EmailService] - Falha ao publicar email de ativação de conta para: {}",
+          email,
+          ex);
+      return false;
     }
-
+  }
 }
