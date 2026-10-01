@@ -31,6 +31,7 @@ public class Usuario {
   @JoinColumn(name = "perfil_id", nullable = false, unique = true)
   private Perfil perfil;
 
+
   @ManyToMany
   @JoinTable(
       name = "usuario_infocard_favorito",
