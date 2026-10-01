@@ -16,6 +16,7 @@ import com.maismaes.com.br.repository.UsuarioRepository;
 import com.maismaes.com.br.utils.UserValidationUtils;
 import jakarta.transaction.Transactional;
 
+import java.io.IOException;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -23,6 +24,7 @@ import lombok.RequiredArgsConstructor;
 import org.apache.catalina.User;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
+import org.springframework.web.multipart.MultipartFile;
 
 @RequiredArgsConstructor
 @Service
@@ -33,6 +35,7 @@ public class UsuarioService {
   private final PerfilRepository perfilRepository;
   private final EmailService emailService;
   private final BCryptPasswordEncoder bCryptPasswordEncoder;
+  private final CloudinaryService cloudinaryService;
 
   public Usuario cadastrarUsuario(Usuario usuario) {
     userValidationUtils.verificarUnicidade(
@@ -154,6 +157,7 @@ public class UsuarioService {
     perfilRepository.delete(perfilLogado);
   }
 
+
   @Transactional
   public void promoverAdmin(UUID usuarioId) {
 
@@ -164,4 +168,26 @@ public class UsuarioService {
 
     usuario.getPerfil().setRole(Role.ADMINISTRADOR);
   }
+
+  public void cadastrarFotoPerfil(UUID usuarioId, MultipartFile arquivo) throws IOException {
+
+    Usuario usuario = usuarioRepository.findById(usuarioId)
+
+            .orElseThrow(() -> new RuntimeException("Usuário não encontrado"));
+
+    String publicId = cloudinaryService.subirImagem(arquivo);
+
+    usuario.getPerfil().setFotoPerfil(publicId);
+
+    usuarioRepository.save(usuario);
+  }
+
+public String buscarFotoPerfil(Perfil perfil) {
+
+  String publicId = perfil.getFotoPerfil();
+
+  return cloudinaryService.getImagemUrl(publicId);
+}
+
+
 }

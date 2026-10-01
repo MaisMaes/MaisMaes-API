@@ -36,6 +36,9 @@ public class Perfil implements UserDetails {
   @Column(name = "role", nullable = false)
   private Role role = Role.MAE_SOLO;
 
+  @Column(name = "foto")
+  private String fotoPerfil;
+
   @OneToOne(mappedBy = "perfil") // Indica que 'perfil' na classe Usuario é o dono da relação
   private Usuario usuario;
 

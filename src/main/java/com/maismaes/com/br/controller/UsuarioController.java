@@ -10,27 +10,24 @@ import com.maismaes.com.br.dto.response.DadosPerfilResponseDTo;
 import com.maismaes.com.br.dto.response.DadosUsuariosDto;
 import com.maismaes.com.br.entities.Perfil;
 import com.maismaes.com.br.entities.PerfilStatus;
+import com.maismaes.com.br.entities.Usuario;
 import com.maismaes.com.br.service.TokenService;
 import com.maismaes.com.br.service.UsuarioService;
 import io.swagger.v3.oas.annotations.Operation;
 import jakarta.validation.Valid;
 
+import java.io.IOException;
 import java.util.List;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
-import org.springframework.web.bind.annotation.DeleteMapping;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PatchMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
 @Slf4j
 @RequiredArgsConstructor
@@ -146,6 +143,53 @@ public class UsuarioController {
 
     return ResponseEntity.noContent().build();
   }
+
+
+    @PatchMapping(value = "/me/foto", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    public ResponseEntity<Void> cadastrarFotoPerfil(
+            @RequestParam("usuarioId") UUID usuarioId,
+            @RequestParam("foto") MultipartFile foto
+    ) throws IOException {
+        usuarioService.cadastrarFotoPerfil(usuarioId, foto);
+        return ResponseEntity.noContent().build();
+    }
+//
+//    @GetMapping("/me/foto")
+//    @Operation(
+//            summary = "Busca foto de perfil do usuario logado",
+//            description =
+//                    "Este endpoint retorna a foto de perfil cadastrada pelo usuário logado")
+//    public ResponseEntity<String> buscarFotoPerfil(
+//            @RequestParam("usuarioId") UUID usuarioId
+//    ) {
+//
+//        String fotoUrl = usuarioService.buscarFotoPerfil(usuarioId);
+//
+//        if (fotoUrl == null) {
+//            return ResponseEntity.noContent().build();
+//        }
+//
+//        return ResponseEntity.ok(fotoUrl);
+//    }
+
+    @GetMapping("/me/foto")
+    @Operation(
+            summary = "Retorna a foto do usuário logado",
+            description = "Retorna a URL da foto de perfil do usuário autenticado"
+    )
+    public ResponseEntity<String> buscarMinhaFoto(
+            @AuthenticationPrincipal Perfil perfil) {
+
+        String fotoUrl = usuarioService.buscarFotoPerfil(perfil);
+
+        if (fotoUrl == null) {
+            return ResponseEntity.noContent().build();
+        }
+
+        return ResponseEntity.ok(fotoUrl);
+    }
+
+
 
 
 }
