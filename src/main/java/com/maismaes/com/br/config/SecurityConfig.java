@@ -60,8 +60,10 @@ public class SecurityConfig {
                     .permitAll()
                     .requestMatchers("/arquivo/**")
                     .permitAll()
+                    .requestMatchers("/delegacias/**").permitAll()
                     .anyRequest()
                     .permitAll())
+                    
         .addFilterBefore(securityFilter, UsernamePasswordAuthenticationFilter.class)
         .build();
   }
