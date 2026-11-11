@@ -3,6 +3,7 @@ package com.maismaes.com.br.controller;
 import com.maismaes.com.br.dto.request.AtualizarStatusDenunciaMulherDTO;
 import com.maismaes.com.br.dto.response.DenunciaMulherResponseDTO;
 import com.maismaes.com.br.entities.Perfil;
+import com.maismaes.com.br.entities.Role;
 import com.maismaes.com.br.service.DenunciaMulherService;
 import io.swagger.v3.oas.annotations.Operation;
 import jakarta.validation.Valid;
@@ -11,6 +12,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
@@ -78,5 +80,29 @@ public class DenunciaMulherController {
     DenunciaMulherResponseDTO resposta = denunciaMulherService.atualizarStatus(id, dto.status());
 
     return ResponseEntity.ok(resposta);
+  }
+
+  @GetMapping("/admin/todas")
+  @PreAuthorize("hasRole('ADMINISTRADOR')")
+  @Operation(
+      summary = "Listar todas as denúncias (Admin)",
+      description = "Lista TODAS as denúncias do sistema com paginação. Acesso exclusivo para administrador.")
+  public ResponseEntity<Page<DenunciaMulherResponseDTO>> listarTodasDenuncias(
+      @AuthenticationPrincipal Perfil perfilLogado,
+      @RequestParam(defaultValue = "0") int pagina,
+      @RequestParam(defaultValue = "10") int tamanho) {
+    log.info(
+        "[DenunciaMulherController] listarTodasDenuncias - Acesso admin. Página: {}, Tamanho: {}",
+        pagina,
+        tamanho);
+
+    if (perfilLogado == null || perfilLogado.getRole() != Role.ADMINISTRADOR) {
+      return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
+    }
+
+    Page<DenunciaMulherResponseDTO> denuncias =
+        denunciaMulherService.listarTodasDenuncias(pagina, tamanho);
+
+    return ResponseEntity.ok(denuncias);
   }
 }

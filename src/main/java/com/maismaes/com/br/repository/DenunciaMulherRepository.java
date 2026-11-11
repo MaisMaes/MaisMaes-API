@@ -10,4 +10,6 @@ import org.springframework.stereotype.Repository;
 @Repository
 public interface DenunciaMulherRepository extends JpaRepository<DenunciaMulher, Long> {
   Page<DenunciaMulher> findByUsuarioId(UUID usuarioId, Pageable pageable);
+
+  Page<DenunciaMulher> findAll(Pageable pageable);
 }

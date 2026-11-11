@@ -66,6 +66,20 @@ public class DenunciaMulherService {
     return denuncias.map(DenunciaMulherResponseDTO::fromEntity);
   }
 
+  public Page<DenunciaMulherResponseDTO> listarTodasDenuncias(int pagina, int tamanho) {
+    log.info(
+        "[DenunciaMulherService] listarTodasDenuncias - Listando TODAS as denúncias - Página: {}, Tamanho: {}",
+        pagina,
+        tamanho);
+
+    Pageable pageable =
+        PageRequest.of(pagina, tamanho, Sort.by("dataDenuncia").descending());
+
+    Page<DenunciaMulher> denuncias = denunciaMulherRepository.findAll(pageable);
+
+    return denuncias.map(DenunciaMulherResponseDTO::fromEntity);
+  }
+
   @Transactional
   public DenunciaMulherResponseDTO atualizarStatus(Long denunciaId, StatusDenunciaMulher novoStatus) {
     log.info(
